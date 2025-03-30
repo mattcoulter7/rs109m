@@ -9,7 +9,9 @@ packages = [{ include = "rs109m", from = "src" }]
 [tool.poetry.dependencies]
 python = ">=3.9,<3.14"
 pyserial = {version = "^3.5"}
-typer = "^0.15.2"
+typer = {version = "^0.15.2"}
+pydantic = {version = "^2.11.1"}
+pyqt6 = {version = "^6.8.1"}
 
 [tool.poetry.group.dev.dependencies]
 pytest = {version = "^8.3.3"}
@@ -22,6 +24,7 @@ pytest-dotenv = {version = "^0.5.2"}
 
 [tool.poetry.scripts]
 rs109m = "rs109m.application.cli:app"
+rs109m_gui = "rs109m.application.gui:app"
 
 [build-system]
 requires = ["poetry-core"]

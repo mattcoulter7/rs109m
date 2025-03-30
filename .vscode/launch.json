@@ -13,6 +13,14 @@
       "console": "integratedTerminal"
     },
     {
+      "name": "gui",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "src/rs109m/application/gui/main.py",
+      // "args": ["${input:entrypoint}"],
+      "console": "integratedTerminal"
+    },
+    {
       "name": "pytest",
       "type": "python",
       "request": "launch",
