@@ -3,13 +3,14 @@ import logging
 from typing import Optional
 
 from rs109m.config import RS109mConfig
+from rs109m.constants import DEFAULT_PASSWORD
 from rs109m.device_io import SerialDeviceIO, MockDeviceIO
 from rs109m.device_config_io import DeviceConfigIO
-
-from .validate import (
+from rs109m.application.validate import (
     validate_interval, validate_vendorid, validate_unitmodel, 
     validate_sernum, validate_refa, validate_refb, 
-    validate_refc, validate_refd, validate_password
+    validate_refc, validate_refd, validate_password,
+    validate_callsign,
 )
 
 logger = logging.getLogger(__name__)
@@ -31,21 +32,21 @@ def main(
         help="Use the mock device IO instead of a real device"
     ),
     mmsi: Optional[int] = typer.Option(
-        None,
+        ...,
         "--mmsi",
         "-m",
         help="MMSI (leave blank to keep current configuration)",
         prompt="Enter MMSI (leave blank to keep current configuration)"
     ),
     name: Optional[str] = typer.Option(
-        None,
+        ...,
         "--name",
         "-n",
         help="Ship name (leave blank to keep current configuration)",
         prompt="Enter ship name (leave blank to keep current configuration)"
     ),
     interval: Optional[int] = typer.Option(
-        None,
+        ...,
         "--interval",
         "-i",
         help="Transmit interval in seconds [30..600] (leave blank to keep current configuration)",
@@ -53,21 +54,22 @@ def main(
         callback=validate_interval
     ),
     ship_type: Optional[int] = typer.Option(
-        None,
+        ...,
         "--type",
         "-t",
         help="Ship type (leave blank to keep current configuration)",
         prompt="Enter ship type (leave blank to keep current configuration)"
     ),
     callsign: Optional[str] = typer.Option(
-        None,
+        ...,
         "--callsign",
         "-c",
-        help="Call sign (leave blank to keep current configuration)",
-        prompt="Enter call sign (leave blank to keep current configuration)"
+        help="Call sign (max 6 characters; leave blank to keep current configuration)",
+        prompt="Enter call sign (max 6 characters; leave blank to keep current configuration)",
+        callback=validate_callsign
     ),
     vendorid: Optional[str] = typer.Option(
-        None,
+        ...,
         "--vendorid",
         "-v",
         help="AIS unit vendor id (3 characters) (leave blank to keep current configuration)",
@@ -75,7 +77,7 @@ def main(
         callback=validate_vendorid
     ),
     unitmodel: Optional[int] = typer.Option(
-        None,
+        ...,
         "--unitmodel",
         "-u",
         help="AIS unit vendor model code (leave blank to keep current configuration)",
@@ -83,7 +85,7 @@ def main(
         callback=validate_unitmodel
     ),
     sernum: Optional[int] = typer.Option(
-        None,
+        ...,
         "--sernum",
         "-s",
         help="AIS unit serial num (leave blank to keep current configuration)",
@@ -91,7 +93,7 @@ def main(
         callback=validate_sernum
     ),
     refa: Optional[int] = typer.Option(
-        None,
+        ...,
         "--refa",
         "-A",
         help="Reference A (leave blank to keep current configuration)",
@@ -99,7 +101,7 @@ def main(
         callback=validate_refa
     ),
     refb: Optional[int] = typer.Option(
-        None,
+        ...,
         "--refb",
         "-B",
         help="Reference B (leave blank to keep current configuration)",
@@ -107,7 +109,7 @@ def main(
         callback=validate_refb
     ),
     refc: Optional[int] = typer.Option(
-        None,
+        ...,
         "--refc",
         "-C",
         help="Reference C (leave blank to keep current configuration)",
@@ -115,7 +117,7 @@ def main(
         callback=validate_refc
     ),
     refd: Optional[int] = typer.Option(
-        None,
+        ...,
         "--refd",
         "-D",
         help="Reference D (leave blank to keep current configuration)",
@@ -123,7 +125,7 @@ def main(
         callback=validate_refd
     ),
     password: Optional[str] = typer.Option(
-        None,
+        DEFAULT_PASSWORD,
         "--password",
         "-P",
         help="Password (leave blank to keep current configuration)",

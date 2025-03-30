@@ -28,7 +28,7 @@ def test_cli_update_config_with_mock():
         "--name", "TEST SHIP",
         "--interval", "30",
         "--type", "36",
-        "--callsign", "CALL",
+        "--callsign", "TSCALL",
         "--vendorid", "ABC",
         "--unitmodel", "1",
         "--sernum", "1234",
@@ -48,4 +48,4 @@ def test_cli_update_config_with_mock():
     assert "TEST SHIP" in result.output
     assert "30" in result.output
     assert "36" in result.output
-    assert "CALL" in result.output
+    assert "TSCALL" in result.output

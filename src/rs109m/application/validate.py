@@ -64,3 +64,8 @@ def validate_interval(value: Optional[int]) -> Optional[int]:
     if value < 30 or value > 600:
         raise typer.BadParameter("Interval must be between 30 and 600 seconds.")
     return value
+
+def validate_callsign(value: Optional[str]) -> Optional[str]:
+    if value is not None and len(value) > 6:
+        raise typer.BadParameter("Callsign must be at most 6 characters long")
+    return value
