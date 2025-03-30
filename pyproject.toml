@@ -23,7 +23,7 @@ pytest-dotenv = {version = "^0.5.2"}
 "*" = []
 
 [tool.poetry.scripts]
-rs109m = "rs109m.application.cli:app"
+rs109m_cli = "rs109m.application.cli:app"
 rs109m_gui = "rs109m.application.gui:app"
 
 [build-system]
