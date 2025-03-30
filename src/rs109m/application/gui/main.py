@@ -85,6 +85,13 @@ class DeviceMonitor(QThread):
     def stop(self) -> None:
         self.running = False
 
+import sys
+from pathlib import Path
+
+def resource_path(relative_path: str) -> str:
+    if getattr(sys, 'frozen', False):
+        return str(Path(sys._MEIPASS) / relative_path)
+    return relative_path
 
 class MainWindow(QMainWindow):
     """
@@ -104,7 +111,7 @@ class MainWindow(QMainWindow):
         # Set window properties
         self.setWindowTitle("RS109m AIS Configuration")
         # Load your icon from relative path
-        self.setWindowIcon(QIcon("assets/icon.ico"))
+        self.setWindowIcon(QIcon(resource_path("assets/icon.ico")))
 
         # The stateless service
         self.config_service = RS109mConfigurationService()

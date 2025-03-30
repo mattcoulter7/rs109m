@@ -11,6 +11,7 @@
                 "run", "pyinstaller",
                 "--name", "rs109m",
                 "--icon=assets/icon.ico",
+                "--add-data=assets/icon.ico:assets",
                 "--onefile",
                 "--noconsole",
                 "src/rs109m/application/gui/main.py"
@@ -18,20 +19,6 @@
             "problemMatcher": [],
             "group": {
                 "kind": "build"
-            },
-            "options": {
-                "shell": {
-                    "executable": "powershell.exe",
-                    "args": [
-                        "-NoExit",
-                        "-Command"
-                    ]
-                },
-                "cwd": "${workspaceFolder}"
-            },
-            "presentation": {
-                "reveal": "always",
-                "panel": "new"
             }
         }
     ],
