@@ -16,7 +16,7 @@ app = typer.Typer()
 
 
 @app.command()
-def main(
+def write_config(
     device: Optional[str] = typer.Option(
         None,
         "--device",
@@ -135,36 +135,19 @@ def main(
         "--extended",
         "-E",
         help="Operate on 0xff size config instead of default 0x40"
-    ),
-    write: bool = typer.Option(
-        False,
-        "--write",
-        "-W",
-        help="Write config to device"
-    ),
-    noread: bool = typer.Option(
-        False,
-        "--noread",
-        "-R",
-        help="Do not read from device"
     )
 ):
-    # Create a configuration object
-    config = RS109mConfig()
-
     # Instantiate DeviceConfigIO if a device is provided; otherwise use a dummy instance.
     if not mock and not device:
         raise ValueError("Must specify device if not using mock")
 
     device_io = MockDeviceIO() if mock else SerialDeviceIO(device)
-    device_config_io = RS109mDriver(device_io)
+    driver = RS109mDriver(device_io)
 
-    # load the current configuration from the device into config
-    device_config_io.load_config(
-        config=config,
-        extended=extended,
+    # read the current configuration from the device into config
+    config = driver.read_config(
         password=password,
-        noread=noread,
+        extended=extended,
     )
 
     # Print the current configuration (the hexadecimal dump is built inside DeviceConfigIO)
@@ -204,14 +187,16 @@ def main(
     )
 
     # Write the configuration back to the device if requested.
-    if device is not None and write:
-        device_config_io.write_config(config, extended)
+    driver.write_config(
+        config,
+        password=password,
+        extended=extended,
+    )
 
     # Re-read the configuration to confirm the new configuration has been applied
-    updated_config = device_config_io.read_config(
-        extended=extended,
+    updated_config = driver.read_config(
         password=password,
-        noread=noread,
+        extended=extended,
     )
     # Print the current configuration (the hexadecimal dump is built inside DeviceConfigIO)
     typer.echo(

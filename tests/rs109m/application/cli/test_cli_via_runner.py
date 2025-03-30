@@ -26,7 +26,6 @@ def test_cli_update_config_with_mock():
         "--refc", "30",
         "--refd", "40",
         "--password", "123",
-        "--write"
     ]
     
     result = runner.invoke(app, args)

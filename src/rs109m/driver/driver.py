@@ -1,11 +1,14 @@
 import re
 import logging
 
+from contextlib import contextmanager
+
 from .device_io.base import DeviceIO
 from .constants import DEFAULT_PASSWORD, PASSWORD_MAXLEN
 from .config import RS109mConfig
 
 logger = logging.getLogger(__name__)
+
 
 class RS109mDriver:
     def __init__(
@@ -18,22 +21,15 @@ class RS109mDriver:
         """
         self.device_io = device_io
 
-    def load_config(
+    @contextmanager
+    def handshake(
         self,
-        config: RS109mConfig,
-        extended: bool,
         password: str,
-        noread: bool,
-    ) -> None:
+    ):
         """
-        Handles the handshake with the device and loads configuration data
-        into the provided config object.
+        Context manager to perform and validate handshake.
+        After exiting, it calls device_io.reset().
         """
-        num_bytes = config.default_len
-        if extended:
-            num_bytes = 0xff
-
-        # Perform the password handshake
         if password is not None:
             if not re.match(f"^[0-9]{{0,{PASSWORD_MAXLEN}}}$", password):
                 raise ValueError(f"Password incorrect: should match [0-9]{{0,{PASSWORD_MAXLEN}}}")
@@ -47,7 +43,28 @@ class RS109mDriver:
         if r != b'\x95\x20':
             raise Exception("Could not initialize with password.")
 
-        if not noread:
+        try:
+            yield
+        finally:
+            self.device_io.reset()
+
+    def read_config(
+        self,
+        *,
+        password: str,
+        extended: bool = False,
+    ) -> RS109mConfig:
+        """
+        Handles the handshake with the device and loads configuration data
+        into the provided config object.
+        """
+        config = RS109mConfig()
+
+        num_bytes = config.default_len
+        if extended:
+            num_bytes = 0xff
+
+        with self.handshake(password):
             self.device_io.write([0x51, num_bytes])
             r = self.device_io.read(2)
             if r != bytes([0x25, num_bytes]):
@@ -57,12 +74,14 @@ class RS109mDriver:
                 raise Exception("Incomplete config data.")
             config.config = data
 
-        self.device_io.reset()
+        return config
 
     def write_config(
         self,
         config: RS109mConfig,
-        extended: bool,
+        *,
+        password: str,
+        extended: bool = False,
     ) -> None:
         """
         Writes the current configuration to the device.
@@ -71,28 +90,12 @@ class RS109mDriver:
         if extended:
             num_bytes = 0xff
 
-        self.device_io.write([0x55, num_bytes])
-        self.device_io.write(config.config[:num_bytes])
-        r = self.device_io.read(2)
-        if r != bytes([0x75, num_bytes]):
-            raise Exception("Write failed.")
-        logger.info("Config written successfully!")
+        with self.handshake(password):
+            self.device_io.write([0x55, num_bytes])
+            self.device_io.write(config.config[:num_bytes])
+            r = self.device_io.read(2)
+            if r != bytes([0x75, num_bytes]):
+                raise Exception("Write failed.")
+            logger.info("Config written successfully!")
 
-        self.device_io.reset()
-
-    def read_config(
-        self,
-        extended: bool,
-        password: str,
-        noread: bool,
-    ):
-        config = RS109mConfig()
-
-        self.load_config(
-            config=config,
-            extended=extended,
-            password=password,
-            noread=noread,
-        )
-
-        return config
+        return None
