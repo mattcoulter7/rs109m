@@ -9,7 +9,7 @@
       "type": "debugpy",
       "request": "launch",
       "program": "src/rs109m/application/cli/main.py",
-      "args": ["${input:entrypoint}"],
+      // "args": ["${input:entrypoint}"],
       "console": "integratedTerminal"
     },
     {

@@ -9,10 +9,10 @@
             "command": "poetry",
             "args": [
                 "run", "pyinstaller",
-                "--name", "mclib-example",
+                "--name", "rs109m",
                 "--icon=assets/icon.ico",
                 "--onefile",
-                "src/rs109m/application/cli/cli.py"
+                "src/rs109m/application/cli/main.py"
             ],
             "problemMatcher": [],
             "group": {

@@ -1,6 +1,7 @@
 import typer
 import logging
 from typing import Optional
+from enum import Enum
 
 from rs109m.driver import RS109mDriver
 from rs109m.driver.constants import DEFAULT_PASSWORD
@@ -13,8 +14,26 @@ from rs109m.application.cli.validate import (
 )
 
 logger = logging.getLogger(__name__)
-app = typer.Typer(no_args_is_help=True)
+app = typer.Typer(
+    # no_args_is_help=True
+)
 
+class Mode(str, Enum):
+    read = "read"
+    write = "write"
+
+@app.callback(invoke_without_command=True)
+def main(
+    ctx: typer.Context,
+    mode: Optional[Mode] = typer.Option(None, "--mode", "-m")
+):
+    if ctx.invoked_subcommand is None:
+        if not mode:
+            mode = typer.prompt(
+                f"Choose mode [{','.join([_.value for _ in Mode])}]",
+                type=Mode,
+            )
+        app([mode.value])
 
 def get_driver(device: Optional[str], mock: bool) -> RS109mDriver:
     if not mock and not device:
@@ -29,16 +48,15 @@ def read_config(
         ...,
         "--device",
         "-d",
-        help="Serial port (e.g. /dev/ttyUSB0)",
-        prompt="Enter serial port device"
+        help="Serial port (e.g. /dev/ttyUSB0)"
     ),
     password: Optional[str] = typer.Option(
-        DEFAULT_PASSWORD,
+        None,
         "--password",
         "-P",
         help="Password (leave blank for default)",
-        prompt="Enter password (leave blank for default)",
-        callback=validate_password
+        callback=validate_password,
+        show_default=False,
     ),
     mock: bool = typer.Option(
         False,
@@ -56,6 +74,9 @@ def read_config(
     config = driver.read_config(password=password, extended=extended)
     typer.echo(f"Read configuration:\n{config.get_config_str(extended)}")
 
+    # simple approach to prevent the window from closing immediately
+    typer.prompt("Press Enter to exit...", default="", show_default=False)
+
 
 @app.command("write")
 def write_config(
@@ -64,14 +85,12 @@ def write_config(
         "--device",
         "-d",
         help="Serial port device (e.g. /dev/ttyUSB0) (leave blank for default config)",
-        prompt="Enter serial port device"
     ),
     password: Optional[str] = typer.Option(
-        DEFAULT_PASSWORD,
+        None,
         "--password",
         "-P",
         help="Password (leave blank for default)",
-        prompt="Enter password (leave blank for default)",
         callback=validate_password
     ),
     mmsi: Optional[int] = typer.Option(
@@ -79,21 +98,18 @@ def write_config(
         "--mmsi",
         "-m",
         help="MMSI (leave blank to keep current configuration)",
-        prompt="Enter MMSI (leave blank to keep current configuration)"
     ),
     name: Optional[str] = typer.Option(
         None,
         "--name",
         "-n",
         help="Ship name (leave blank to keep current configuration)",
-        prompt="Enter ship name (leave blank to keep current configuration)"
     ),
     interval: Optional[int] = typer.Option(
         None,
         "--interval",
         "-i",
         help="Transmit interval in seconds [30..600] (leave blank to keep current configuration)",
-        prompt="Enter transmit interval in seconds (leave blank to keep current configuration)",
         callback=validate_interval
     ),
     ship_type: Optional[int] = typer.Option(
@@ -101,14 +117,12 @@ def write_config(
         "--type",
         "-t",
         help="Ship type (leave blank to keep current configuration)",
-        prompt="Enter ship type (leave blank to keep current configuration)"
     ),
     callsign: Optional[str] = typer.Option(
         None,
         "--callsign",
         "-c",
         help="Call sign (max 6 characters; leave blank to keep current configuration)",
-        prompt="Enter call sign (max 6 characters; leave blank to keep current configuration)",
         callback=validate_callsign
     ),
     refa: Optional[int] = typer.Option(
@@ -116,7 +130,6 @@ def write_config(
         "--refa",
         "-A",
         help="Reference A (leave blank to keep current configuration)",
-        prompt="Enter Reference A (leave blank to keep current configuration)",
         callback=validate_refa
     ),
     refb: Optional[int] = typer.Option(
@@ -124,7 +137,6 @@ def write_config(
         "--refb",
         "-B",
         help="Reference B (leave blank to keep current configuration)",
-        prompt="Enter Reference B (leave blank to keep current configuration)",
         callback=validate_refb
     ),
     refc: Optional[int] = typer.Option(
@@ -132,7 +144,6 @@ def write_config(
         "--refc",
         "-C",
         help="Reference C (leave blank to keep current configuration)",
-        prompt="Enter Reference C (leave blank to keep current configuration)",
         callback=validate_refc
     ),
     refd: Optional[int] = typer.Option(
@@ -140,7 +151,6 @@ def write_config(
         "--refd",
         "-D",
         help="Reference D (leave blank to keep current configuration)",
-        prompt="Enter Reference D (leave blank to keep current configuration)",
         callback=validate_refd
     ),
     vendorid: Optional[str] = typer.Option(
@@ -148,7 +158,6 @@ def write_config(
         "--vendorid",
         "-v",
         help="AIS unit vendor id (3 characters) (leave blank to keep current configuration)",
-        prompt="Enter vendor id (leave blank to keep current configuration)",
         callback=validate_vendorid
     ),
     unitmodel: Optional[int] = typer.Option(
@@ -156,7 +165,6 @@ def write_config(
         "--unitmodel",
         "-u",
         help="AIS unit vendor model code (leave blank to keep current configuration)",
-        prompt="Enter vendor model code (leave blank to keep current configuration)",
         callback=validate_unitmodel
     ),
     sernum: Optional[int] = typer.Option(
@@ -164,7 +172,6 @@ def write_config(
         "--sernum",
         "-s",
         help="AIS unit serial num (leave blank to keep current configuration)",
-        prompt="Enter serial number (leave blank to keep current configuration)",
         callback=validate_sernum
     ),
     mock: bool = typer.Option(
@@ -240,6 +247,9 @@ def write_config(
     typer.echo(
         f"Written configuration:\n{updated_config.get_config_str(extended)}"
     )
+
+    # simple approach to prevent the window from closing immediately
+    typer.prompt("Press Enter to exit...", default="", show_default=False)
 
 
 if __name__ == "__main__":
