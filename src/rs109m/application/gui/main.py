@@ -4,6 +4,7 @@ from enum import Enum, auto
 from typing import Optional
 
 from PyQt6.QtCore import QThread, pyqtSignal, Qt
+from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QLabel, QLineEdit, QPushButton, QFormLayout, QCheckBox, QComboBox,
@@ -93,11 +94,17 @@ class MainWindow(QMainWindow):
       - Disables device fields when connected or connecting
       - Disables config fields & write button until connected
       - Catches Pydantic ValidationError for config writes
+      - Shows a custom window icon from assets/icon.ico
+      - Visibly grays out disabled fields
     """
 
     def __init__(self) -> None:
         super().__init__()
+
+        # Set window properties
         self.setWindowTitle("RS109m AIS Configuration")
+        # Load your icon from relative path
+        self.setWindowIcon(QIcon("assets/icon.ico"))
 
         # The stateless service
         self.config_service = RS109mConfigurationService()
@@ -111,7 +118,7 @@ class MainWindow(QMainWindow):
         # Current device state
         self.device_state = DeviceState.DISCONNECTED
 
-        # Build the UI (including a single button for connect/disconnect/cancel)
+        # Build the UI
         self._init_ui()
 
         # Start in DISCONNECTED state
@@ -136,7 +143,7 @@ class MainWindow(QMainWindow):
 
     def _init_ui(self) -> None:
         """
-        Create all widgets and apply a sleek dark theme with modern styling.
+        Create all widgets.
         """
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
@@ -226,12 +233,13 @@ class MainWindow(QMainWindow):
         write_button_layout.addStretch(1)
         main_layout.addLayout(write_button_layout)
 
-        # Apply modern dark theme
+        # Apply modern dark theme (including a disabled style)
         self._apply_modern_dark_theme()
 
     def _apply_modern_dark_theme(self) -> None:
         """
-        A sleek modern stylesheet for a 2020+ look.
+        A sleek modern stylesheet with :disabled states for
+        a visually obvious disabled color scheme.
         """
         self.setStyleSheet("""
             QWidget {
@@ -258,6 +266,7 @@ class MainWindow(QMainWindow):
                 font-weight: 500;
                 color: #cccccc;
             }
+            /* Normal fields */
             QLineEdit, QComboBox {
                 border: 1px solid #444;
                 border-radius: 4px;
@@ -266,6 +275,12 @@ class MainWindow(QMainWindow):
             }
             QLineEdit:focus, QComboBox:focus {
                 border: 1px solid #7aaaff;
+            }
+            /* Disabled fields (grayed out) */
+            QLineEdit:disabled, QComboBox:disabled {
+                color: #999999;
+                background-color: #343434;
+                border: 1px solid #555;
             }
             QPushButton {
                 background-color: #3a3a3a;
@@ -279,6 +294,11 @@ class MainWindow(QMainWindow):
             }
             QPushButton:pressed {
                 background-color: #222222;
+            }
+            QPushButton:disabled {
+                color: #7f7f7f;
+                background-color: #2f2f2f;
+                border: 1px solid #444;
             }
             QCheckBox {
                 spacing: 8px;
@@ -294,6 +314,13 @@ class MainWindow(QMainWindow):
                 background-color: #7aaaff;
                 border: 1px solid #7aaaff;
             }
+            QCheckBox:disabled {
+                color: #777777;
+            }
+            QCheckBox::indicator:disabled {
+                background-color: #444;
+                border: 1px solid #555;
+            }
         """)
 
     def _set_device_state(self, new_state: DeviceState) -> None:
@@ -307,7 +334,7 @@ class MainWindow(QMainWindow):
         self.device_state = new_state
 
         if new_state == DeviceState.DISCONNECTED:
-            self.status_label.setText("Status: Disconnected")
+            self.status_label.setText("🔴 Status: Disconnected")
             # enable device/password fields
             self.device_edit.setEnabled(True)
             self.password_edit.setEnabled(True)
@@ -321,7 +348,7 @@ class MainWindow(QMainWindow):
             self.set_config_fields_enabled(False)
 
         elif new_state == DeviceState.CONNECTING:
-            self.status_label.setText("Status: Connecting...")
+            self.status_label.setText("🟡 Status: Connecting...")
             # disable device/password fields
             self.device_edit.setEnabled(False)
             self.password_edit.setEnabled(False)
@@ -335,7 +362,7 @@ class MainWindow(QMainWindow):
             self.set_config_fields_enabled(False)
 
         elif new_state == DeviceState.CONNECTED:
-            self.status_label.setText("Status: Connected")
+            self.status_label.setText("🟢 Status: Connected")
             # disable device/password fields (can't change port while connected)
             self.device_edit.setEnabled(False)
             self.password_edit.setEnabled(False)
@@ -349,7 +376,7 @@ class MainWindow(QMainWindow):
             self.set_config_fields_enabled(True)
 
         elif new_state == DeviceState.DISCONNECTING:
-            self.status_label.setText("Status: Disconnecting...")
+            self.status_label.setText("🟡 Status: Disconnecting...")
             # disable everything
             self.device_edit.setEnabled(False)
             self.password_edit.setEnabled(False)
@@ -431,7 +458,6 @@ class MainWindow(QMainWindow):
         Called by background thread when a config read is successful.
         If we were in CONNECTING state, we move to CONNECTED.
         """
-        # Might have canceled in the meantime, so check state
         if self.device_state == DeviceState.CONNECTING:
             self._set_device_state(DeviceState.CONNECTED)
             self.current_config = config
