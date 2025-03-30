@@ -2,11 +2,11 @@ import sys
 import time
 from typing import Optional
 
-from PyQt6.QtCore import QThread, pyqtSignal
+from PyQt6.QtCore import QThread, pyqtSignal, Qt
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QLabel, QLineEdit, QPushButton, QFormLayout, QCheckBox, QComboBox,
-    QMessageBox, QGroupBox
+    QMessageBox, QGroupBox, QSpacerItem, QSizePolicy
 )
 
 from rs109m.driver_service.service import RS109mConfigurationService
@@ -23,7 +23,7 @@ class DeviceMonitor(QThread):
     A background thread that attempts to read the device config
     every few seconds, to detect when the device is online.
     """
-    device_connected = pyqtSignal(object)   # emits an RS109mConfig object when connected
+    device_connected = pyqtSignal(object)  # emits an RS109mConfig object when connected
     device_disconnected = pyqtSignal()
 
     def __init__(
@@ -121,18 +121,20 @@ class MainWindow(QMainWindow):
 
     def _init_ui(self) -> None:
         """
-        Create all widgets and apply a "clean and sexy" dark theme.
+        Create all widgets and apply a sleek dark theme with modern styling.
         """
-        # === Overall container ===
         central_widget = QWidget()
-        main_layout = QVBoxLayout()
-        central_widget.setLayout(main_layout)
         self.setCentralWidget(central_widget)
 
-        # === Device/connection group ===
+        main_layout = QVBoxLayout()
+        main_layout.setSpacing(16)  # extra spacing between sections
+        central_widget.setLayout(main_layout)
+
+        # === Device Connection Group ===
         connection_group = QGroupBox("Device Connection")
-        connection_layout = QHBoxLayout()
-        connection_group.setLayout(connection_layout)
+        connection_group_layout = QHBoxLayout()
+        connection_group_layout.setSpacing(10)
+        connection_group.setLayout(connection_group_layout)
 
         self.device_edit = QLineEdit()
         self.device_edit.setPlaceholderText("/dev/ttyUSB0")
@@ -146,31 +148,32 @@ class MainWindow(QMainWindow):
         self.connect_button = QPushButton("Connect")
         self.connect_button.clicked.connect(self.on_connect_clicked)
 
-        connection_layout.addWidget(QLabel("Device:"))
-        connection_layout.addWidget(self.device_edit)
-        connection_layout.addWidget(QLabel("Password:"))
-        connection_layout.addWidget(self.password_edit)
-        connection_layout.addWidget(self.mock_checkbox)
-        connection_layout.addWidget(self.extended_checkbox)
-        connection_layout.addWidget(self.connect_button)
+        connection_group_layout.addWidget(QLabel("Device:"))
+        connection_group_layout.addWidget(self.device_edit)
+        connection_group_layout.addWidget(QLabel("Password:"))
+        connection_group_layout.addWidget(self.password_edit)
+        connection_group_layout.addWidget(self.mock_checkbox)
+        connection_group_layout.addWidget(self.extended_checkbox)
+        connection_group_layout.addWidget(self.connect_button)
 
+        # Status label below the connection group
         self.status_label = QLabel("Status: Disconnected")
 
         main_layout.addWidget(connection_group)
         main_layout.addWidget(self.status_label)
 
-        # === AIS Configuration form ===
+        # === AIS Configuration Group ===
         config_group = QGroupBox("AIS Configuration")
         config_form = QFormLayout()
+        config_form.setLabelAlignment(Qt.AlignmentFlag.AlignRight)  # align labels to the right
+        config_form.setHorizontalSpacing(12)
+        config_form.setVerticalSpacing(8)
         config_group.setLayout(config_form)
 
-        # Create inputs for each config field
         self.mmsi_input = QLineEdit()
         self.name_input = QLineEdit()
         self.interval_input = QLineEdit()
-
         self.ship_type_combo = QComboBox()
-        # Populate combo with all valid ShipType members
         for st in ShipType:
             self.ship_type_combo.addItem(f"{st.value} - {st.name}", st)
 
@@ -198,48 +201,90 @@ class MainWindow(QMainWindow):
 
         main_layout.addWidget(config_group)
 
-        # === Write button ===
+        # === Write Button (Centered) ===
         self.write_button = QPushButton("Write Configuration")
-        self.write_button.clicked.connect(self.on_write_clicked)
         self.write_button.setEnabled(False)  # disabled until connected
-        main_layout.addWidget(self.write_button)
 
-        # === Apply a nice dark theme ===
-        self._apply_dark_theme()
+        write_button_layout = QHBoxLayout()
+        write_button_layout.addStretch(1)
+        write_button_layout.addWidget(self.write_button)
+        write_button_layout.addStretch(1)
+        main_layout.addLayout(write_button_layout)
 
-    def _apply_dark_theme(self) -> None:
+        self.write_button.clicked.connect(self.on_write_clicked)
+
+        # Apply modern dark theme
+        self._apply_modern_dark_theme()
+
+    def _apply_modern_dark_theme(self) -> None:
         """
-        Apply a minimal "sexy" dark theme for a modern look.
+        A sleek modern stylesheet for a 2020+ look.
         """
         self.setStyleSheet("""
             QWidget {
-                background-color: #2b2b2b;
-                color: #f0f0f0;
-                font-size: 10pt;
-                font-family: Arial, Helvetica, sans-serif;
+                font-family: 'Segoe UI', sans-serif;
+                font-size: 11pt;
+                color: #eeeeee;
+                background-color: #202124;
             }
+
             QGroupBox {
-                margin-top: 10px;
-                font-weight: bold;
-                border: 1px solid #555;
-                border-radius: 5px;
+                border: 1px solid #3a3a3a;
+                border-radius: 6px;
+                margin-top: 20px;
                 padding: 10px;
             }
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                subcontrol-position: top center;
+                padding: 0 3px;
+                font-weight: bold;
+                font-size: 12pt;
+                color: #bbbbbb;
+            }
+
+            QLabel {
+                font-weight: 500;
+                color: #cccccc;
+            }
+
             QLineEdit, QComboBox {
-                background-color: #3c3c3c;
-                border: 1px solid #555;
+                border: 1px solid #444;
+                border-radius: 4px;
                 padding: 4px;
+                background-color: #2a2a2a;
             }
             QLineEdit:focus, QComboBox:focus {
-                border: 1px solid #888;
+                border: 1px solid #7aaaff;
             }
+
             QPushButton {
-                background-color: #444;
+                background-color: #3a3a3a;
+                color: #eeeeee;
+                border-radius: 6px;
                 border: 1px solid #666;
                 padding: 6px 12px;
             }
             QPushButton:hover {
-                background-color: #555;
+                background-color: #505050;
+            }
+            QPushButton:pressed {
+                background-color: #222222;
+            }
+
+            QCheckBox {
+                spacing: 8px;
+            }
+            QCheckBox::indicator {
+                width: 16px;
+                height: 16px;
+                border-radius: 3px;
+                border: 1px solid #888;
+                background-color: #2a2a2a;
+            }
+            QCheckBox::indicator:checked {
+                background-color: #7aaaff;
+                border: 1px solid #7aaaff;
             }
         """)
 
@@ -249,7 +294,6 @@ class MainWindow(QMainWindow):
         then create a new one with the current device/password/mock/extended values,
         and start it. The monitor will emit signals as it connects/disconnects.
         """
-        # Stop the old monitor if it's still running
         self._stop_monitor()
 
         device = self.device_edit.text().strip()
@@ -258,10 +302,13 @@ class MainWindow(QMainWindow):
         extended = self.extended_checkbox.isChecked()
 
         if not device:
-            QMessageBox.warning(self, "No Device Specified", "Please enter a device path (e.g. /dev/ttyUSB0).")
+            QMessageBox.warning(
+                self,
+                "No Device Specified",
+                "Please enter a device path (e.g. /dev/ttyUSB0)."
+            )
             return
 
-        # Create a new monitor and start it
         self.monitor = DeviceMonitor(
             service=self.config_service,
             device=device,
@@ -355,11 +402,11 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(self, "Not Connected", "No device connection yet.")
             return
 
-        new_config = self.build_config_from_form()
-
         if not self.monitor:
             QMessageBox.warning(self, "No Monitor", "Please connect first.")
             return
+
+        new_config = self.build_config_from_form()
 
         req = RS109mWriteConfigRequest(
             config=new_config,
@@ -382,10 +429,10 @@ class MainWindow(QMainWindow):
 
 
 def app() -> None:
-    app = QApplication(sys.argv)
+    application = QApplication(sys.argv)
     window = MainWindow()
     window.show()
-    sys.exit(app.exec())
+    sys.exit(application.exec())
 
 
 if __name__ == "__main__":
