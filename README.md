@@ -40,9 +40,27 @@ Big thanks to the original authors for laying the foundation — this project wo
 
 ---
 
-## 🚀 Quick Start
+## 🧪 Running the Application
 
-### 📦 Installation
+### 💻 Windows GUI Executable (No Python Required)
+
+You can download a pre-built version of the GUI application (Windows only) here:
+
+👉 **[Download rs109m.zip](https://github.com/mattcoulter7/rs109m/releases/download/1.0.0/rs109m.zip)**
+
+1. Unzip the file.
+2. Run `rs109m_gui.exe` inside the extracted folder.
+
+> ⚠️ **Important Notes**:
+> - This version has **only been tested on Windows** using the **mock device mode**.
+> - It has **not yet been tested with a real RS-109M device**.
+> - Please use at your own precaution if attempting to connect to real hardware.
+
+---
+
+## 🛠️ Developer Installation
+
+If you want to run or modify the source code locally:
 
 1. **Install [Poetry](https://python-poetry.org/docs/#installation):**
 
@@ -50,21 +68,20 @@ Big thanks to the original authors for laying the foundation — this project wo
 curl -sSL https://install.python-poetry.org | python3 -
 ```
 
-2. **Clone and install dependencies:**
+2. **Clone the repository and install dependencies:**
 
 ```bash
-git clone https://github.com/your-org/rs109m.git
+git clone https://github.com/mattcoulter7/rs109m.git
 cd rs109m
 poetry install
 ```
 
----
+You can now use the CLI or launch the GUI:
 
-## 🧪 Running the Application
-
-Awesome! Here's the updated **CLI section** for your README, now including the `--help` outputs for both `read` and `write` commands to give users a clear idea of what options are available.
-
----
+```bash
+poetry run rs109m_cli read --device=fake_device --mock
+poetry run rs109m_gui
+```
 
 ### 📟 CLI (Command Line)
 
