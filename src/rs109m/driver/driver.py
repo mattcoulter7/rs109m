@@ -5,7 +5,7 @@ from contextlib import contextmanager
 
 from .device_io.base import DeviceIO
 from .constants import DEFAULT_PASSWORD, PASSWORD_MAXLEN
-from .config import RS109mConfig
+from .config import RS109mRawConfig
 
 logger = logging.getLogger(__name__)
 
@@ -53,12 +53,12 @@ class RS109mDriver:
         *,
         password: str,
         extended: bool = False,
-    ) -> RS109mConfig:
+    ) -> RS109mRawConfig:
         """
         Handles the handshake with the device and loads configuration data
         into the provided config object.
         """
-        config = RS109mConfig()
+        config = RS109mRawConfig()
 
         num_bytes = config.default_len
         if extended:
@@ -78,7 +78,7 @@ class RS109mDriver:
 
     def write_config(
         self,
-        config: RS109mConfig,
+        config: RS109mRawConfig,
         *,
         password: str,
         extended: bool = False,

@@ -2,7 +2,7 @@ import pytest
 from typer.testing import CliRunner
 
 from rs109m.application.cli import app
-from rs109m.driver import RS109mConfig
+from rs109m.driver import RS109mRawConfig
 from rs109m.driver.device_io import MockDeviceIO
 
 runner = CliRunner()

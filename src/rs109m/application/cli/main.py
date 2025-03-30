@@ -3,9 +3,13 @@ import logging
 from typing import Optional
 from enum import Enum
 
-from rs109m.driver import RS109mDriver
-from rs109m.driver.constants import DEFAULT_PASSWORD
-from rs109m.driver.device_io import SerialDeviceIO, MockDeviceIO
+from rs109m.driver_service.models import (
+    RS109mReadConfigRequest,
+    RS109mWriteConfigRequest,
+    RS109mConfig,
+)
+from rs109m.driver_service.ship_type import ShipType
+from rs109m.driver_service.service import RS109mConfigurationService
 from rs109m.application.cli.validate import (
     validate_interval, validate_vendorid, validate_unitmodel, 
     validate_sernum, validate_refa, validate_refb, 
@@ -14,9 +18,8 @@ from rs109m.application.cli.validate import (
 )
 
 logger = logging.getLogger(__name__)
-app = typer.Typer(
-    # no_args_is_help=True
-)
+service = RS109mConfigurationService()
+app = typer.Typer()
 
 class Mode(str, Enum):
     read = "read"
@@ -34,12 +37,6 @@ def main(
                 type=Mode,
             )
         app([mode.value])
-
-def get_driver(device: Optional[str], mock: bool) -> RS109mDriver:
-    if not mock and not device:
-        raise ValueError("Must specify device if not using mock")
-    device_io = MockDeviceIO() if mock else SerialDeviceIO(device)
-    return RS109mDriver(device_io)
 
 
 @app.command("read")
@@ -70,9 +67,16 @@ def read_config(
         help="Operate on 0xff size config instead of default 0x40"
     )
 ):
-    driver = get_driver(device, mock)
-    config = driver.read_config(password=password, extended=extended)
-    typer.echo(f"Read configuration:\n{config.get_config_str(extended)}")
+    config = service.read_config(
+        RS109mReadConfigRequest(
+            device=device,
+            mock=mock,
+            password=password,
+            extended=extended
+        )
+    )
+
+    typer.echo(f"Read configuration:\n{config.get_config_str()}")
 
     # simple approach to prevent the window from closing immediately
     typer.prompt("Press Enter to exit...", default="", show_default=False)
@@ -186,66 +190,32 @@ def write_config(
         help="Operate on 0xff size config instead of default 0x40"
     )
 ):
-    driver = get_driver(device, mock)
-
-    # read the current configuration from the device into config
-    config = driver.read_config(
-        password=password,
-        extended=extended,
+    config = service.write_config(
+        RS109mWriteConfigRequest(
+            config=RS109mConfig(
+                mmsi=mmsi,
+                name=name,
+                interval=interval,
+                ship_type=ShipType(ship_type),
+                callsign=callsign,
+                vendorid=vendorid,
+                unitmodel=unitmodel,
+                sernum=sernum,
+                refa=refa,
+                refb=refb,
+                refc=refc,
+                refd=refd,
+            ),
+            device=device,
+            mock=mock,
+            password=password,
+            extended=extended
+        )
     )
 
     # Print the current configuration (the hexadecimal dump is built inside DeviceConfigIO)
     typer.echo(
-        f"Old configuration:\n{config.get_config_str(extended)}"
-    )
-
-    # Update configuration from provided CLI parameters.
-    if mmsi is not None:
-        config.mmsi = mmsi
-    if name is not None:
-        config.name = name
-    if interval is not None:
-        config.interval = interval
-    if ship_type is not None:
-        config.shipncargo = ship_type
-    if callsign is not None:
-        config.callsign = callsign
-    if vendorid is not None:
-        config.vendorid = vendorid
-    if unitmodel is not None:
-        config.unitmodel = unitmodel
-    if sernum is not None:
-        config.sernum = sernum
-    if refa is not None:
-        config.refa = refa
-    if refb is not None:
-        config.refb = refb
-    if refc is not None:
-        config.refc = refc
-    if refd is not None:
-        config.refd = refd
-
-    # Print the current configuration (the hexadecimal dump is built inside DeviceConfigIO)
-    typer.echo(
-        f"Desired configuration:\n{config.get_config_str(extended)}"
-    )
-
-    # Write the configuration back to the device if requested.
-    driver.write_config(
-        config,
-        password=password,
-        extended=extended,
-    )
-
-    # Re-read the configuration to confirm the new configuration has been applied
-    updated_config = driver.read_config(
-        password=password,
-        extended=extended,
-    )
-
-    # Print the current configuration (the hexadecimal dump is built inside DeviceConfigIO)
-    typer.echo(
-        f"Written configuration:\n{updated_config.get_config_str(extended)}"
+        f"Writen configuration:\n{config.get_config_str()}"
     )
 
     # simple approach to prevent the window from closing immediately

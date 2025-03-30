@@ -1,28 +1,28 @@
 import pytest
-from rs109m.driver import RS109mConfig
+from rs109m.driver import RS109mRawConfig
 
 
 def test_default_config():
     # When no config is provided, the instance uses the default_config.
-    cfg = RS109mConfig()
-    assert cfg.config == RS109mConfig.default_config
+    cfg = RS109mRawConfig()
+    assert cfg.config == RS109mRawConfig.default_config
 
 def test_custom_config_length():
     # When a custom config is provided (shorter than default),
     # the remaining bytes should come from default_config.
     custom = bytearray([0x01, 0x02, 0x03])
-    cfg = RS109mConfig(custom)
-    expected = bytearray(custom + RS109mConfig.default_config[len(custom):])
+    cfg = RS109mRawConfig(custom)
+    expected = bytearray(custom + RS109mRawConfig.default_config[len(custom):])
     assert cfg.config == expected
 
 def test_mmsi_property():
-    cfg = RS109mConfig()
+    cfg = RS109mRawConfig()
     # Compute default mmsi from default_config bytes 1-4.
     default_mmsi = (
-        RS109mConfig.default_config[1] +
-        (RS109mConfig.default_config[2] << 8) +
-        (RS109mConfig.default_config[3] << 16) +
-        (RS109mConfig.default_config[4] << 24)
+        RS109mRawConfig.default_config[1] +
+        (RS109mRawConfig.default_config[2] << 8) +
+        (RS109mRawConfig.default_config[3] << 16) +
+        (RS109mRawConfig.default_config[4] << 24)
     )
     assert cfg.mmsi == default_mmsi
 
@@ -37,7 +37,7 @@ def test_mmsi_property():
     assert cfg.config[4] == ((new_mmsi >> 24) & 0xff)
 
 def test_name_property():
-    cfg = RS109mConfig()
+    cfg = RS109mRawConfig()
     # Default name is stored in indices 5:25.
     # Expectation is based on the actual default_config contents.
     assert cfg.name == "109040173"
@@ -50,7 +50,7 @@ def test_name_property():
     assert cfg.config[5:25] == b"TESTSHIP".ljust(20, b' ')
 
 def test_interval_property():
-    cfg = RS109mConfig()
+    cfg = RS109mRawConfig()
     # Default interval is config[0] * 30. With default config[0] == 0x04 → 120 seconds.
     assert cfg.interval == 120
 
@@ -67,7 +67,7 @@ def test_interval_property():
     assert cfg.interval == 600
 
 def test_shipncargo_property():
-    cfg = RS109mConfig()
+    cfg = RS109mRawConfig()
     # Default shipncargo is at index 31 (0x00 → 0).
     assert cfg.shipncargo == 0
 
@@ -75,7 +75,7 @@ def test_shipncargo_property():
     assert cfg.shipncargo == 55
 
 def test_vendorid_property():
-    cfg = RS109mConfig()
+    cfg = RS109mRawConfig()
     # Default vendorid is computed from indices 28, 29, 30.
     # We'll just check that it returns a string (may be empty or alphanumeric).
     vendor = cfg.vendorid
@@ -85,7 +85,7 @@ def test_vendorid_property():
     assert cfg.vendorid == "ABC"
 
 def test_unitmodel_property():
-    cfg = RS109mConfig()
+    cfg = RS109mRawConfig()
     # Default unitmodel comes from config[27] >> 4.
     assert cfg.unitmodel == 0
 
@@ -100,7 +100,7 @@ def test_unitmodel_property():
         cfg.unitmodel = -1
 
 def test_sernum_property():
-    cfg = RS109mConfig()
+    cfg = RS109mRawConfig()
     # Default sernum is computed from indices 25,26, and the lower nibble of 27.
     # Based on default_config, we expect sernum to be 1.
     assert cfg.sernum == 1
@@ -114,7 +114,7 @@ def test_sernum_property():
         cfg.sernum = (1 << 20)  # Exceeds maximum allowed
 
 def test_callsign_property():
-    cfg = RS109mConfig()
+    cfg = RS109mRawConfig()
     # Test setting and then retrieving the callsign.
     # The set_callsign method reverses the safe alphanumeric string and then encodes it
     # into a fixed 5-byte field. Therefore, setting "CALL123" results in only the last 6
@@ -134,7 +134,7 @@ def test_callsign_property():
     assert cs.isalnum()
 
 def test_refa_property():
-    cfg = RS109mConfig()
+    cfg = RS109mRawConfig()
     # Compute default refa as defined:
     default_refa = (cfg.config[39] >> 5) | ((cfg.config[38] & 0x3f) << 3)
     assert cfg.refa == default_refa
@@ -146,7 +146,7 @@ def test_refa_property():
         cfg.refa = 600  # Exceeds maximum (511)
 
 def test_refb_property():
-    cfg = RS109mConfig()
+    cfg = RS109mRawConfig()
     # Default refb is computed as:
     default_refb = (cfg.config[40] >> 4) | ((cfg.config[39] & ((1 << 5) - 1)) << 4)
     assert cfg.refb == default_refb
@@ -158,7 +158,7 @@ def test_refb_property():
         cfg.refb = 600  # Exceeds allowed range
 
 def test_refc_property():
-    cfg = RS109mConfig()
+    cfg = RS109mRawConfig()
     default_refc = (cfg.config[41] >> 6) | ((cfg.config[40] & ((1 << 4) - 1)) << 2)
     assert cfg.refc == default_refc
 
@@ -172,7 +172,7 @@ def test_refc_property():
     assert cfg.refc == 0
 
 def test_refd_property():
-    cfg = RS109mConfig()
+    cfg = RS109mRawConfig()
     default_refd = cfg.config[41] & ((1 << 6) - 1)
     assert cfg.refd == default_refd
 
@@ -183,7 +183,7 @@ def test_refd_property():
         cfg.refd = 70  # Exceeds allowed maximum (63)
 
 def test_repr():
-    cfg = RS109mConfig()
+    cfg = RS109mRawConfig()
     rep = repr(cfg)
     # The repr should start with "[ 0x" and include hex bytes separated by ", 0x".
     assert rep.startswith("[ 0x")

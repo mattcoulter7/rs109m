@@ -1,5 +1,5 @@
 from .base import DeviceIO
-from ..config import RS109mConfig
+from ..config import RS109mRawConfig
 
 class MockDeviceIO(DeviceIO):
     """
@@ -16,7 +16,7 @@ class MockDeviceIO(DeviceIO):
 
     def __init__(self, extended: bool = False):
         self.extended = extended
-        self.device_config = RS109mConfig()  # Our "on-device" config
+        self.device_config = RS109mRawConfig()  # Our "on-device" config
         self.write_buffer = bytearray()
         self.read_cursor = 0
         self.read_buffer = bytearray()
