@@ -4,7 +4,7 @@ This repo is contains a [config tool](rs109m.py) and some info about the [RS-109
 
 The device is sold by [Socotran](http://web.archive.org/web/20210806132018/https://socotran.com/products/fishing-net-tracker-locator-gps-marine-ais-netsonde-net-sonde-for-boating-rs-109m) and is also available on Ali\*xpress and e\*ay. In the UK, it is also sold by [East Anglian Radio](http://web.archive.org/web/20210806152420/https://www.eastanglianradio.com/rs-109-ais.html).
 
-[![buoy complete](images/buoy_800px.jpg)](images/buoy.jpg)
+[![buoy complete](bin/images/buoy_800px.jpg)](bin/images/buoy.jpg)
 
 Information was gathered by personal observations like photographs of the PCB, and logging of the data stream while configuring.
 
@@ -59,15 +59,15 @@ optional arguments:
 
 Unscrewing the cap gives access to on/off switch (a magnet which acts on a reed relais) and the charging and programming connectors:
 
-[![buoy connectors](images/buoy_connectors_800px.jpg)](images/buoy_connectors.jpg)
+[![buoy connectors](bin/images/buoy_connectors_800px.jpg)](bin/images/buoy_connectors.jpg)
 
 The PCB in all its glory:
 
-[![pcb complete](images/pcb_complete_800px.jpg)](images/pcb_complete.jpg)
+[![pcb complete](bin/images/pcb_complete_800px.jpg)](bin/images/pcb_complete.jpg)
 
-[![pcb front side](images/pcb_front_800px.jpg)](images/pcb_front.jpg)
+[![pcb front side](bin/images/pcb_front_800px.jpg)](bin/images/pcb_front.jpg)
 
-[![pcb back side](images/pcb_back_800px.jpg)](images/pcb_back.jpg)
+[![pcb back side](bin/images/pcb_back_800px.jpg)](bin/images/pcb_back.jpg)
 
 
 ## Manufacturer's PCSW 1.7 software
@@ -75,15 +75,15 @@ The PCB in all its glory:
 The software is available upon request from the dealer.
 It is a Qt application compiled for Windows. I could get it to start with Wine 6.14 on Linux (Linux 5.12.15-arch1-1 x86_64, ArchLinux distribution), but had no chance to get the serial communications running.
 
-![programming software screenshot](images/pcsw17_screenshot_en.png)
+![programming software screenshot](bin/images/pcsw17_screenshot_en.png)
 
-Using the software on a Windows VM, I was able to produce some [logs](logs/) to get knowledge of the serial protocol.
+Using the software on a Windows VM, I was able to produce some [logs](bin/logs/) to get knowledge of the serial protocol.
 
 "Production mode" seems to do nothing more than incrementing MMSI number on subsequent writes.
 
 ## Configuration protocol
 
-See [logs dir](logs/) for data I obtained while doing tiny configuration changes.
+See [logs dir](bin/logs/) for data I obtained while doing tiny configuration changes.
 
 The protocol is via serial 115200,8n1.
 

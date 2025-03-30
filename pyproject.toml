@@ -1,0 +1,28 @@
+[tool.poetry]
+name = "rs109m"
+description = "RS-109M AIS net locator buoy configurator | for Allan Coulter"
+version = "1.0.7"
+authors = ["Matthew Coulter <mattcoul7@gmail.com>", "Sönke J. Peters <github.com/speters>"]
+readme = "README.md"
+packages = [{ include = "rs109m", from = "src" }]
+
+[tool.poetry.dependencies]
+python = ">=3.9,<3.14"
+pyserial = {version = "^3.5"}
+typer = "^0.15.2"
+
+[tool.poetry.group.dev.dependencies]
+pytest = {version = "^8.3.3"}
+debugpy = {version = "^1.8.0"}
+pyinstaller = {version = "^6.11.0"}
+pytest-dotenv = {version = "^0.5.2"}
+
+[tool.poetry.extras]
+"*" = []
+
+[tool.poetry.scripts]
+rs109m = "rs109m.cli:main"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

@@ -1,0 +1,38 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Compile into .exe",
+            "type": "shell",
+            "command": "poetry",
+            "args": [
+                "run", "pyinstaller",
+                "--name", "mclib-example",
+                "--icon=assets/icon.ico",
+                "--onefile",
+                "src/mclib/example/application/cli.py"
+            ],
+            "problemMatcher": [],
+            "group": {
+                "kind": "build"
+            },
+            "options": {
+                "shell": {
+                    "executable": "powershell.exe",
+                    "args": [
+                        "-NoExit",
+                        "-Command"
+                    ]
+                },
+                "cwd": "${workspaceFolder}"
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        }
+    ],
+    "inputs": []
+}
