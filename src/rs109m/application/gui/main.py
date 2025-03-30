@@ -1,13 +1,16 @@
 import sys
 import time
+from enum import Enum, auto
 from typing import Optional
 
 from PyQt6.QtCore import QThread, pyqtSignal, Qt
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QLabel, QLineEdit, QPushButton, QFormLayout, QCheckBox, QComboBox,
-    QMessageBox, QGroupBox, QSpacerItem, QSizePolicy
+    QMessageBox, QGroupBox
 )
+
+from pydantic import ValidationError
 
 from rs109m.driver_service.service import RS109mConfigurationService
 from rs109m.driver_service.models import (
@@ -16,6 +19,13 @@ from rs109m.driver_service.models import (
     RS109mWriteConfigRequest
 )
 from rs109m.driver_service.ship_type import ShipType
+
+
+class DeviceState(Enum):
+    DISCONNECTED = auto()
+    CONNECTING = auto()
+    CONNECTED = auto()
+    DISCONNECTING = auto()
 
 
 class DeviceMonitor(QThread):
@@ -78,10 +88,11 @@ class DeviceMonitor(QThread):
 class MainWindow(QMainWindow):
     """
     A single-window PyQt6 application that:
-      - Lets user specify device, password, mock, extended
-      - Clicks "Connect" to start monitoring the device
-      - Displays AIS fields (mmsi, name, etc.) once connected
-      - Allows user to write updated config
+      - Uses a 4-state connection model (Disconnected/Connecting/Connected/Disconnecting)
+      - The button changes to "Connect", "Disconnect", or "Cancel" based on state
+      - Disables device fields when connected or connecting
+      - Disables config fields & write button until connected
+      - Catches Pydantic ValidationError for config writes
     """
 
     def __init__(self) -> None:
@@ -97,11 +108,14 @@ class MainWindow(QMainWindow):
         # The last known config from the device
         self.current_config: Optional[RS109mConfig] = None
 
-        # Build the UI (including a Connect button)
+        # Current device state
+        self.device_state = DeviceState.DISCONNECTED
+
+        # Build the UI (including a single button for connect/disconnect/cancel)
         self._init_ui()
 
-        # We do NOT automatically start the monitor here—
-        # the user must click "Connect" to start.
+        # Start in DISCONNECTED state
+        self._set_device_state(DeviceState.DISCONNECTED)
 
     def closeEvent(self, event) -> None:
         """
@@ -113,6 +127,7 @@ class MainWindow(QMainWindow):
     def _stop_monitor(self) -> None:
         """
         If there's an active monitor, stop it and wait for it to finish.
+        (Used for both Disconnecting and Cancel.)
         """
         if self.monitor and self.monitor.isRunning():
             self.monitor.stop()
@@ -146,7 +161,7 @@ class MainWindow(QMainWindow):
         self.extended_checkbox = QCheckBox("Extended")
 
         self.connect_button = QPushButton("Connect")
-        self.connect_button.clicked.connect(self.on_connect_clicked)
+        self.connect_button.clicked.connect(self.on_connect_button_clicked)
 
         connection_group_layout.addWidget(QLabel("Device:"))
         connection_group_layout.addWidget(self.device_edit)
@@ -164,11 +179,11 @@ class MainWindow(QMainWindow):
 
         # === AIS Configuration Group ===
         config_group = QGroupBox("AIS Configuration")
-        config_form = QFormLayout()
-        config_form.setLabelAlignment(Qt.AlignmentFlag.AlignRight)  # align labels to the right
-        config_form.setHorizontalSpacing(12)
-        config_form.setVerticalSpacing(8)
-        config_group.setLayout(config_form)
+        self.config_form = QFormLayout()
+        self.config_form.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
+        self.config_form.setHorizontalSpacing(12)
+        self.config_form.setVerticalSpacing(8)
+        config_group.setLayout(self.config_form)
 
         self.mmsi_input = QLineEdit()
         self.name_input = QLineEdit()
@@ -186,32 +201,30 @@ class MainWindow(QMainWindow):
         self.refc_input = QLineEdit()
         self.refd_input = QLineEdit()
 
-        config_form.addRow("MMSI:", self.mmsi_input)
-        config_form.addRow("Ship Name:", self.name_input)
-        config_form.addRow("Interval (30..600):", self.interval_input)
-        config_form.addRow("Ship Type:", self.ship_type_combo)
-        config_form.addRow("Callsign:", self.callsign_input)
-        config_form.addRow("Vendor ID:", self.vendorid_input)
-        config_form.addRow("Unit Model:", self.unitmodel_input)
-        config_form.addRow("Serial Number:", self.sernum_input)
-        config_form.addRow("Ref A:", self.refa_input)
-        config_form.addRow("Ref B:", self.refb_input)
-        config_form.addRow("Ref C:", self.refc_input)
-        config_form.addRow("Ref D:", self.refd_input)
+        self.config_form.addRow("MMSI:", self.mmsi_input)
+        self.config_form.addRow("Ship Name:", self.name_input)
+        self.config_form.addRow("Interval (30..600):", self.interval_input)
+        self.config_form.addRow("Ship Type:", self.ship_type_combo)
+        self.config_form.addRow("Callsign:", self.callsign_input)
+        self.config_form.addRow("Vendor ID:", self.vendorid_input)
+        self.config_form.addRow("Unit Model:", self.unitmodel_input)
+        self.config_form.addRow("Serial Number:", self.sernum_input)
+        self.config_form.addRow("Ref A:", self.refa_input)
+        self.config_form.addRow("Ref B:", self.refb_input)
+        self.config_form.addRow("Ref C:", self.refc_input)
+        self.config_form.addRow("Ref D:", self.refd_input)
 
         main_layout.addWidget(config_group)
 
         # === Write Button (Centered) ===
         self.write_button = QPushButton("Write Configuration")
-        self.write_button.setEnabled(False)  # disabled until connected
+        self.write_button.clicked.connect(self.on_write_clicked)
 
         write_button_layout = QHBoxLayout()
         write_button_layout.addStretch(1)
         write_button_layout.addWidget(self.write_button)
         write_button_layout.addStretch(1)
         main_layout.addLayout(write_button_layout)
-
-        self.write_button.clicked.connect(self.on_write_clicked)
 
         # Apply modern dark theme
         self._apply_modern_dark_theme()
@@ -227,7 +240,6 @@ class MainWindow(QMainWindow):
                 color: #eeeeee;
                 background-color: #202124;
             }
-
             QGroupBox {
                 border: 1px solid #3a3a3a;
                 border-radius: 6px;
@@ -242,12 +254,10 @@ class MainWindow(QMainWindow):
                 font-size: 12pt;
                 color: #bbbbbb;
             }
-
             QLabel {
                 font-weight: 500;
                 color: #cccccc;
             }
-
             QLineEdit, QComboBox {
                 border: 1px solid #444;
                 border-radius: 4px;
@@ -257,7 +267,6 @@ class MainWindow(QMainWindow):
             QLineEdit:focus, QComboBox:focus {
                 border: 1px solid #7aaaff;
             }
-
             QPushButton {
                 background-color: #3a3a3a;
                 color: #eeeeee;
@@ -271,7 +280,6 @@ class MainWindow(QMainWindow):
             QPushButton:pressed {
                 background-color: #222222;
             }
-
             QCheckBox {
                 spacing: 8px;
             }
@@ -288,57 +296,155 @@ class MainWindow(QMainWindow):
             }
         """)
 
-    def on_connect_clicked(self) -> None:
+    def _set_device_state(self, new_state: DeviceState) -> None:
         """
-        Called when user clicks 'Connect'. We stop any existing monitor,
-        then create a new one with the current device/password/mock/extended values,
-        and start it. The monitor will emit signals as it connects/disconnects.
+        Updates self.device_state and adjusts UI elements accordingly:
+         - connect_button text & enabled state
+         - device/password fields
+         - config fields
+         - status_label
         """
-        self._stop_monitor()
+        self.device_state = new_state
 
-        device = self.device_edit.text().strip()
-        password = self.password_edit.text().strip() or None
-        mock = self.mock_checkbox.isChecked()
-        extended = self.extended_checkbox.isChecked()
+        if new_state == DeviceState.DISCONNECTED:
+            self.status_label.setText("Status: Disconnected")
+            # enable device/password fields
+            self.device_edit.setEnabled(True)
+            self.password_edit.setEnabled(True)
+            self.mock_checkbox.setEnabled(True)
+            self.extended_checkbox.setEnabled(True)
 
-        if not device:
-            QMessageBox.warning(
-                self,
-                "No Device Specified",
-                "Please enter a device path (e.g. /dev/ttyUSB0)."
+            self.connect_button.setText("Connect")
+            self.connect_button.setEnabled(True)
+
+            # disable config fields & write button
+            self.set_config_fields_enabled(False)
+
+        elif new_state == DeviceState.CONNECTING:
+            self.status_label.setText("Status: Connecting...")
+            # disable device/password fields
+            self.device_edit.setEnabled(False)
+            self.password_edit.setEnabled(False)
+            self.mock_checkbox.setEnabled(False)
+            self.extended_checkbox.setEnabled(False)
+
+            self.connect_button.setText("Cancel")
+            self.connect_button.setEnabled(True)
+
+            # still no config access
+            self.set_config_fields_enabled(False)
+
+        elif new_state == DeviceState.CONNECTED:
+            self.status_label.setText("Status: Connected")
+            # disable device/password fields (can't change port while connected)
+            self.device_edit.setEnabled(False)
+            self.password_edit.setEnabled(False)
+            self.mock_checkbox.setEnabled(False)
+            self.extended_checkbox.setEnabled(False)
+
+            self.connect_button.setText("Disconnect")
+            self.connect_button.setEnabled(True)
+
+            # now we can edit config fields
+            self.set_config_fields_enabled(True)
+
+        elif new_state == DeviceState.DISCONNECTING:
+            self.status_label.setText("Status: Disconnecting...")
+            # disable everything
+            self.device_edit.setEnabled(False)
+            self.password_edit.setEnabled(False)
+            self.mock_checkbox.setEnabled(False)
+            self.extended_checkbox.setEnabled(False)
+            self.connect_button.setText("Cancel")
+            self.connect_button.setEnabled(True)
+            self.set_config_fields_enabled(False)
+
+    def set_config_fields_enabled(self, enabled: bool) -> None:
+        """
+        Enable/disable all config inputs + write button.
+        """
+        widgets = [
+            self.mmsi_input, self.name_input, self.interval_input,
+            self.ship_type_combo, self.callsign_input,
+            self.vendorid_input, self.unitmodel_input, self.sernum_input,
+            self.refa_input, self.refb_input, self.refc_input, self.refd_input,
+        ]
+        for w in widgets:
+            w.setEnabled(enabled)
+        self.write_button.setEnabled(enabled)
+
+    def on_connect_button_clicked(self) -> None:
+        """
+        Single button handling:
+          - If DISCONNECTED -> go CONNECTING (start monitor)
+          - If CONNECTING -> Cancel (stop monitor, go DISCONNECTED)
+          - If CONNECTED -> Disconnect (go DISCONNECTING)
+          - If DISCONNECTING -> Cancel (immediately go DISCONNECTED)
+        """
+        if self.device_state == DeviceState.DISCONNECTED:
+            # Start connecting
+            device = self.device_edit.text().strip()
+            password = self.password_edit.text().strip() or None
+            mock = self.mock_checkbox.isChecked()
+            extended = self.extended_checkbox.isChecked()
+
+            if not device:
+                QMessageBox.warning(
+                    self,
+                    "No Device Specified",
+                    "Please enter a device path (e.g. /dev/ttyUSB0)."
+                )
+                return
+
+            self._set_device_state(DeviceState.CONNECTING)
+            # start monitor
+            self.monitor = DeviceMonitor(
+                service=self.config_service,
+                device=device,
+                password=password,
+                mock=mock,
+                extended=extended,
+                interval=2.0
             )
-            return
+            self.monitor.device_connected.connect(self.on_device_connected)
+            self.monitor.device_disconnected.connect(self.on_device_disconnected)
+            self.monitor.start()
 
-        self.monitor = DeviceMonitor(
-            service=self.config_service,
-            device=device,
-            password=password,
-            mock=mock,
-            extended=extended,
-            interval=2.0
-        )
-        self.monitor.device_connected.connect(self.on_device_connected)
-        self.monitor.device_disconnected.connect(self.on_device_disconnected)
-        self.monitor.start()
+        elif self.device_state == DeviceState.CONNECTING:
+            # Cancel connecting
+            self._stop_monitor()
+            self._set_device_state(DeviceState.DISCONNECTED)
 
-        self.status_label.setText("Status: Connecting...")
+        elif self.device_state == DeviceState.CONNECTED:
+            # Attempt to disconnect
+            self._set_device_state(DeviceState.DISCONNECTING)
+            self._stop_monitor()  # blocks until done
+            self._set_device_state(DeviceState.DISCONNECTED)
+
+        elif self.device_state == DeviceState.DISCONNECTING:
+            # Cancel disconnect => forcibly become DISCONNECTED
+            self._stop_monitor()
+            self._set_device_state(DeviceState.DISCONNECTED)
 
     def on_device_connected(self, config: RS109mConfig) -> None:
         """
         Called by background thread when a config read is successful.
+        If we were in CONNECTING state, we move to CONNECTED.
         """
-        self.status_label.setText("Status: Connected")
-        self.write_button.setEnabled(True)
-        self.current_config = config
-        self.populate_form(config)
+        # Might have canceled in the meantime, so check state
+        if self.device_state == DeviceState.CONNECTING:
+            self._set_device_state(DeviceState.CONNECTED)
+            self.current_config = config
+            self.populate_form(config)
 
     def on_device_disconnected(self) -> None:
         """
         Called by background thread when device was connected but is now lost.
+        If we were in CONNECTING or CONNECTED, we go to DISCONNECTED.
         """
-        self.status_label.setText("Status: Disconnected")
-        self.write_button.setEnabled(False)
-        self.current_config = None
+        if self.device_state in (DeviceState.CONNECTING, DeviceState.CONNECTED):
+            self._set_device_state(DeviceState.DISCONNECTED)
+            self.current_config = None
 
     def populate_form(self, config: RS109mConfig) -> None:
         """
@@ -355,7 +461,6 @@ class MainWindow(QMainWindow):
         set_text_or_clear(self.interval_input, config.interval)
 
         if config.ship_type is not None:
-            # ship_type could be an int or a ShipType; ensure we get the ShipType
             st_val = config.ship_type.value if isinstance(config.ship_type, ShipType) else config.ship_type
             idx = self.ship_type_combo.findData(ShipType(st_val))
             if idx >= 0:
@@ -373,6 +478,7 @@ class MainWindow(QMainWindow):
     def build_config_from_form(self) -> RS109mConfig:
         """
         Create an RS109mConfig object from the current form fields.
+        May raise pydantic.ValidationError if data is invalid.
         """
         def safe_int(text: str) -> Optional[int]:
             text = text.strip()
@@ -383,7 +489,7 @@ class MainWindow(QMainWindow):
             mmsi=safe_int(self.mmsi_input.text()),
             name=self.name_input.text().strip() or None,
             interval=safe_int(self.interval_input.text()),
-            ship_type=selected_shiptype,  # already a ShipType
+            ship_type=selected_shiptype,
             callsign=self.callsign_input.text().strip() or None,
             vendorid=self.vendorid_input.text().strip() or None,
             unitmodel=safe_int(self.unitmodel_input.text()),
@@ -398,15 +504,23 @@ class MainWindow(QMainWindow):
         """
         Called when the user clicks "Write Configuration."
         """
-        if not self.current_config:
-            QMessageBox.warning(self, "Not Connected", "No device connection yet.")
+        if self.device_state != DeviceState.CONNECTED:
+            QMessageBox.warning(self, "Not Connected", "Please connect first.")
+            return
+
+        try:
+            new_config = self.build_config_from_form()
+        except ValidationError as e:
+            QMessageBox.critical(
+                self,
+                "Validation Error",
+                f"Invalid input:\n{e}"
+            )
             return
 
         if not self.monitor:
-            QMessageBox.warning(self, "No Monitor", "Please connect first.")
+            QMessageBox.warning(self, "No Monitor", "Monitor not running.")
             return
-
-        new_config = self.build_config_from_form()
 
         req = RS109mWriteConfigRequest(
             config=new_config,
@@ -424,8 +538,8 @@ class MainWindow(QMainWindow):
                 f"Configuration written successfully!\n\n"
                 f"Current config:\n{written_config.get_config_str()}"
             )
-        except Exception as e:
-            QMessageBox.critical(self, "Write Failed", str(e))
+        except Exception as ex:
+            QMessageBox.critical(self, "Write Failed", str(ex))
 
 
 def app() -> None:
