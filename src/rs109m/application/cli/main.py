@@ -19,24 +19,9 @@ from rs109m.application.cli.validate import (
 
 logger = logging.getLogger(__name__)
 service = RS109mConfigurationService()
-app = typer.Typer()
-
-class Mode(str, Enum):
-    read = "read"
-    write = "write"
-
-@app.callback(invoke_without_command=True)
-def main(
-    ctx: typer.Context,
-    mode: Optional[Mode] = typer.Option(None, "--mode", "-m")
-):
-    if ctx.invoked_subcommand is None:
-        if not mode:
-            mode = typer.prompt(
-                f"Choose mode [{','.join([_.value for _ in Mode])}]",
-                type=Mode,
-            )
-        app([mode.value])
+app = typer.Typer(
+    no_args_is_help=True,
+)
 
 
 @app.command("read")
