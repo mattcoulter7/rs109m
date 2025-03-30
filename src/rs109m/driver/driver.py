@@ -7,7 +7,7 @@ from .config import RS109mConfig
 
 logger = logging.getLogger(__name__)
 
-class DeviceConfigIO:
+class RS109mDriver:
     def __init__(
         self,
         device_io: DeviceIO,

@@ -10,6 +10,8 @@ packages = [{ include = "rs109m", from = "src" }]
 python = ">=3.9,<3.14"
 pyserial = {version = "^3.5"}
 typer = "^0.15.2"
+pydantic = "^2.11.1"
+pyqt6 = "^6.8.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = {version = "^8.3.3"}

@@ -22,8 +22,8 @@ class RS109mConfig:
     ])
     default_len = 0x40
 
-    def __init__(self, config=[]):
-        self.set_config(config)
+    def __init__(self):
+        self.set_config([])
 
     def get_config(self):
         return self._config
@@ -32,7 +32,7 @@ class RS109mConfig:
         # TODO: implement differently, as setting config as slices config[34:38] might be convenient
         if config == []:
             # self._config = self.default_config[:self.default_len]
-            self._config = self.default_config
+            self._config = self.default_config[:]  # [:] creates a copy, ensuring data doesn't persistent across multiple objects
         else:
             clen = 0xff if (len(config) > 0xff) else len(config)
             self._config = bytearray(

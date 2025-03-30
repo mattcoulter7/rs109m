@@ -2,6 +2,7 @@ import re
 import typer
 from typing import Optional
 
+
 def validate_vendorid(value: Optional[str]) -> Optional[str]:
     if value is None:
         return value

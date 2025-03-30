@@ -1,5 +1,6 @@
 import pytest
-from rs109m.config import RS109mConfig
+from rs109m.driver import RS109mConfig
+
 
 def test_default_config():
     # When no config is provided, the instance uses the default_config.

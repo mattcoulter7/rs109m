@@ -2,11 +2,9 @@ import typer
 import logging
 from typing import Optional
 
-from rs109m.config import RS109mConfig
-from rs109m.constants import DEFAULT_PASSWORD
-from rs109m.device_io import SerialDeviceIO, MockDeviceIO
-from rs109m.device_config_io import DeviceConfigIO
-from rs109m.application.validate import (
+from rs109m.driver import RS109mConfig, RS109mDriver
+from rs109m.driver.device_io import SerialDeviceIO, MockDeviceIO
+from rs109m.application.cli.validate import (
     validate_interval, validate_vendorid, validate_unitmodel, 
     validate_sernum, validate_refa, validate_refb, 
     validate_refc, validate_refd, validate_password,
@@ -125,7 +123,7 @@ def main(
         callback=validate_refd
     ),
     password: Optional[str] = typer.Option(
-        DEFAULT_PASSWORD,
+        ...,
         "--password",
         "-P",
         help="Password (leave blank to keep current configuration)",
@@ -159,7 +157,7 @@ def main(
         raise ValueError("Must specify device if not using mock")
 
     device_io = MockDeviceIO() if mock else SerialDeviceIO(device)
-    device_config_io = DeviceConfigIO(device_io)
+    device_config_io = RS109mDriver(device_io)
 
     # load the current configuration from the device into config
     device_config_io.load_config(

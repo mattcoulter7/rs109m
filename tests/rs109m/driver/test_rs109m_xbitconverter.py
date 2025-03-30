@@ -1,5 +1,6 @@
 import pytest
-from rs109m.xbitconverter import toxbit, fromxbit
+
+from rs109m.driver.xbitconverter import toxbit, fromxbit
 
 # ----------------------------
 # Tests for fromxbit function
