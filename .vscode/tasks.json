@@ -12,6 +12,7 @@
                 "--name", "rs109m",
                 "--icon=assets/icon.ico",
                 "--onefile",
+                "--noconsole",
                 "src/rs109m/application/gui/main.py"
             ],
             "problemMatcher": [],
