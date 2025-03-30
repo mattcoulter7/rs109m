@@ -12,7 +12,7 @@
                 "--name", "mclib-example",
                 "--icon=assets/icon.ico",
                 "--onefile",
-                "src/mclib/example/application/cli.py"
+                "src/rs109m/application/cli/cli.py"
             ],
             "problemMatcher": [],
             "group": {

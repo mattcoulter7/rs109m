@@ -8,7 +8,8 @@
       "name": "cli",
       "type": "debugpy",
       "request": "launch",
-      "program": "src/rs109m/application/cli.py",
+      "program": "src/rs109m/application/cli/main.py",
+      "args": ["${input:entrypoint}"],
       "console": "integratedTerminal"
     },
     {
@@ -31,6 +32,15 @@
       "justMyCode": false,
       "console": "integratedTerminal",
       "cwd": "${workspaceFolder}"
+    }
+  ],
+  "inputs": [
+    {
+      "id": "entrypoint",
+      "type": "pickString",
+      "description": "Choose command to run",
+      "default": "read",
+      "options": ["read", "write"]
     }
   ]
 }

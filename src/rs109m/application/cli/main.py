@@ -2,7 +2,8 @@ import typer
 import logging
 from typing import Optional
 
-from rs109m.driver import RS109mConfig, RS109mDriver
+from rs109m.driver import RS109mDriver
+from rs109m.driver.constants import DEFAULT_PASSWORD
 from rs109m.driver.device_io import SerialDeviceIO, MockDeviceIO
 from rs109m.application.cli.validate import (
     validate_interval, validate_vendorid, validate_unitmodel, 
@@ -24,10 +25,32 @@ def get_driver(device: Optional[str], mock: bool) -> RS109mDriver:
 
 @app.command("read")
 def read_config(
-    device: Optional[str] = typer.Option(None, "--device", "-d", help="Serial port (e.g. /dev/ttyUSB0)"),
-    mock: bool = typer.Option(False, "--mock", help="Use the mock device"),
-    password: Optional[str] = typer.Option(..., "--password", "-P", prompt=True, callback=validate_password),
-    extended: bool = typer.Option(False, "--extended", "-E", help="Use 0xff config size instead of 0x40")
+    device: str = typer.Option(
+        ...,
+        "--device",
+        "-d",
+        help="Serial port (e.g. /dev/ttyUSB0)",
+        prompt="Enter serial port device"
+    ),
+    password: Optional[str] = typer.Option(
+        DEFAULT_PASSWORD,
+        "--password",
+        "-P",
+        help="Password (leave blank for default)",
+        prompt="Enter password (leave blank for default)",
+        callback=validate_password
+    ),
+    mock: bool = typer.Option(
+        False,
+        "--mock",
+        help="Use the mock device IO instead of a real device"
+    ),
+    extended: bool = typer.Option(
+        False,
+        "--extended",
+        "-E",
+        help="Operate on 0xff size config instead of default 0x40"
+    )
 ):
     driver = get_driver(device, mock)
     config = driver.read_config(password=password, extended=extended)
@@ -36,34 +59,37 @@ def read_config(
 
 @app.command("write")
 def write_config(
-    device: Optional[str] = typer.Option(
-        None,
+    device: str = typer.Option(
+        ...,
         "--device",
         "-d",
         help="Serial port device (e.g. /dev/ttyUSB0) (leave blank for default config)",
-        prompt="Enter serial port device (leave blank for default config)"
+        prompt="Enter serial port device"
     ),
-    mock: bool = typer.Option(
-        False,
-        "--mock",
-        help="Use the mock device IO instead of a real device"
+    password: Optional[str] = typer.Option(
+        DEFAULT_PASSWORD,
+        "--password",
+        "-P",
+        help="Password (leave blank for default)",
+        prompt="Enter password (leave blank for default)",
+        callback=validate_password
     ),
     mmsi: Optional[int] = typer.Option(
-        ...,
+        None,
         "--mmsi",
         "-m",
         help="MMSI (leave blank to keep current configuration)",
         prompt="Enter MMSI (leave blank to keep current configuration)"
     ),
     name: Optional[str] = typer.Option(
-        ...,
+        None,
         "--name",
         "-n",
         help="Ship name (leave blank to keep current configuration)",
         prompt="Enter ship name (leave blank to keep current configuration)"
     ),
     interval: Optional[int] = typer.Option(
-        ...,
+        None,
         "--interval",
         "-i",
         help="Transmit interval in seconds [30..600] (leave blank to keep current configuration)",
@@ -71,46 +97,22 @@ def write_config(
         callback=validate_interval
     ),
     ship_type: Optional[int] = typer.Option(
-        ...,
+        None,
         "--type",
         "-t",
         help="Ship type (leave blank to keep current configuration)",
         prompt="Enter ship type (leave blank to keep current configuration)"
     ),
     callsign: Optional[str] = typer.Option(
-        ...,
+        None,
         "--callsign",
         "-c",
         help="Call sign (max 6 characters; leave blank to keep current configuration)",
         prompt="Enter call sign (max 6 characters; leave blank to keep current configuration)",
         callback=validate_callsign
     ),
-    vendorid: Optional[str] = typer.Option(
-        ...,
-        "--vendorid",
-        "-v",
-        help="AIS unit vendor id (3 characters) (leave blank to keep current configuration)",
-        prompt="Enter vendor id (leave blank to keep current configuration)",
-        callback=validate_vendorid
-    ),
-    unitmodel: Optional[int] = typer.Option(
-        ...,
-        "--unitmodel",
-        "-u",
-        help="AIS unit vendor model code (leave blank to keep current configuration)",
-        prompt="Enter vendor model code (leave blank to keep current configuration)",
-        callback=validate_unitmodel
-    ),
-    sernum: Optional[int] = typer.Option(
-        ...,
-        "--sernum",
-        "-s",
-        help="AIS unit serial num (leave blank to keep current configuration)",
-        prompt="Enter serial number (leave blank to keep current configuration)",
-        callback=validate_sernum
-    ),
     refa: Optional[int] = typer.Option(
-        ...,
+        None,
         "--refa",
         "-A",
         help="Reference A (leave blank to keep current configuration)",
@@ -118,7 +120,7 @@ def write_config(
         callback=validate_refa
     ),
     refb: Optional[int] = typer.Option(
-        ...,
+        None,
         "--refb",
         "-B",
         help="Reference B (leave blank to keep current configuration)",
@@ -126,7 +128,7 @@ def write_config(
         callback=validate_refb
     ),
     refc: Optional[int] = typer.Option(
-        ...,
+        None,
         "--refc",
         "-C",
         help="Reference C (leave blank to keep current configuration)",
@@ -134,20 +136,41 @@ def write_config(
         callback=validate_refc
     ),
     refd: Optional[int] = typer.Option(
-        ...,
+        None,
         "--refd",
         "-D",
         help="Reference D (leave blank to keep current configuration)",
         prompt="Enter Reference D (leave blank to keep current configuration)",
         callback=validate_refd
     ),
-    password: Optional[str] = typer.Option(
-        ...,
-        "--password",
-        "-P",
-        help="Password (leave blank to keep current configuration)",
-        prompt="Enter password (leave blank to keep current configuration)",
-        callback=validate_password
+    vendorid: Optional[str] = typer.Option(
+        None,
+        "--vendorid",
+        "-v",
+        help="AIS unit vendor id (3 characters) (leave blank to keep current configuration)",
+        prompt="Enter vendor id (leave blank to keep current configuration)",
+        callback=validate_vendorid
+    ),
+    unitmodel: Optional[int] = typer.Option(
+        None,
+        "--unitmodel",
+        "-u",
+        help="AIS unit vendor model code (leave blank to keep current configuration)",
+        prompt="Enter vendor model code (leave blank to keep current configuration)",
+        callback=validate_unitmodel
+    ),
+    sernum: Optional[int] = typer.Option(
+        None,
+        "--sernum",
+        "-s",
+        help="AIS unit serial num (leave blank to keep current configuration)",
+        prompt="Enter serial number (leave blank to keep current configuration)",
+        callback=validate_sernum
+    ),
+    mock: bool = typer.Option(
+        False,
+        "--mock",
+        help="Use the mock device IO instead of a real device"
     ),
     extended: bool = typer.Option(
         False,
