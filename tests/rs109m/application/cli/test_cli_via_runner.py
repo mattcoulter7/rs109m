@@ -8,11 +8,27 @@ from rs109m.driver.device_io import MockDeviceIO
 runner = CliRunner()
 
 
-def test_cli_update_config_with_mock():
+
+def test_cli_read():
     # Provide every parameter so that no prompt is triggered.
     args = [
-        "--device", "dummy_device",  # device is a dummy string here
+        "read",
         "--mock",
+        "--device", "dummy_device",
+        "--password", "123",
+    ]
+    
+    result = runner.invoke(app, args)
+    
+    assert result.exit_code == 0
+
+def test_cli_write():
+    # Provide every parameter so that no prompt is triggered.
+    args = [
+        "write",
+        "--mock",
+        "--device", "dummy_device",  # device is a dummy string here
+        "--password", "123",
         "--mmsi", "123456789",
         "--name", "TEST SHIP",
         "--interval", "30",
@@ -25,7 +41,6 @@ def test_cli_update_config_with_mock():
         "--refb", "20",
         "--refc", "30",
         "--refd", "40",
-        "--password", "123",
     ]
     
     result = runner.invoke(app, args)

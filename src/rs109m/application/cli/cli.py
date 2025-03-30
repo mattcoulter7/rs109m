@@ -12,10 +12,29 @@ from rs109m.application.cli.validate import (
 )
 
 logger = logging.getLogger(__name__)
-app = typer.Typer()
+app = typer.Typer(no_args_is_help=True)
 
 
-@app.command()
+def get_driver(device: Optional[str], mock: bool) -> RS109mDriver:
+    if not mock and not device:
+        raise ValueError("Must specify device if not using mock")
+    device_io = MockDeviceIO() if mock else SerialDeviceIO(device)
+    return RS109mDriver(device_io)
+
+
+@app.command("read")
+def read_config(
+    device: Optional[str] = typer.Option(None, "--device", "-d", help="Serial port (e.g. /dev/ttyUSB0)"),
+    mock: bool = typer.Option(False, "--mock", help="Use the mock device"),
+    password: Optional[str] = typer.Option(..., "--password", "-P", prompt=True, callback=validate_password),
+    extended: bool = typer.Option(False, "--extended", "-E", help="Use 0xff config size instead of 0x40")
+):
+    driver = get_driver(device, mock)
+    config = driver.read_config(password=password, extended=extended)
+    typer.echo(f"Read configuration:\n{config.get_config_str(extended)}")
+
+
+@app.command("write")
 def write_config(
     device: Optional[str] = typer.Option(
         None,
@@ -137,12 +156,7 @@ def write_config(
         help="Operate on 0xff size config instead of default 0x40"
     )
 ):
-    # Instantiate DeviceConfigIO if a device is provided; otherwise use a dummy instance.
-    if not mock and not device:
-        raise ValueError("Must specify device if not using mock")
-
-    device_io = MockDeviceIO() if mock else SerialDeviceIO(device)
-    driver = RS109mDriver(device_io)
+    driver = get_driver(device, mock)
 
     # read the current configuration from the device into config
     config = driver.read_config(
@@ -198,6 +212,7 @@ def write_config(
         password=password,
         extended=extended,
     )
+
     # Print the current configuration (the hexadecimal dump is built inside DeviceConfigIO)
     typer.echo(
         f"Written configuration:\n{updated_config.get_config_str(extended)}"
