@@ -1,9 +1,6 @@
-import pytest
 from typer.testing import CliRunner
 
 from rs109m.application.cli import app
-from rs109m.driver import RS109mRawConfig
-from rs109m.driver.device_io import MockDeviceIO
 
 runner = CliRunner()
 
@@ -50,5 +47,5 @@ def test_cli_write():
     assert "123456789" in result.output
     assert "TEST SHIP" in result.output
     assert "30" in result.output
-    assert "36" in result.output
+    assert "ShipType.SAILING" in result.output  # this is from 36
     assert "TSALL" in result.output
