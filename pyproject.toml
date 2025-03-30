@@ -21,7 +21,7 @@ pytest-dotenv = {version = "^0.5.2"}
 "*" = []
 
 [tool.poetry.scripts]
-rs109m = "rs109m.cli:main"
+rs109m = "rs109m.application.cli:app"
 
 [build-system]
 requires = ["poetry-core"]
