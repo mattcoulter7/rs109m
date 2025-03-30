@@ -2,14 +2,13 @@ import sys
 import time
 from typing import Optional
 
-from PyQt6.QtCore import QThread, pyqtSignal, QTimer, Qt
+from PyQt6.QtCore import QThread, pyqtSignal
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QLabel, QLineEdit, QPushButton, QFormLayout, QCheckBox, QComboBox,
     QMessageBox, QGroupBox
 )
 
-# Replace these imports with your actual module paths
 from rs109m.driver_service.service import RS109mConfigurationService
 from rs109m.driver_service.models import (
     RS109mConfig,

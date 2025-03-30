@@ -12,7 +12,7 @@
                 "--name", "rs109m",
                 "--icon=assets/icon.ico",
                 "--onefile",
-                "src/rs109m/application/cli/main.py"
+                "src/rs109m/application/gui/main.py"
             ],
             "problemMatcher": [],
             "group": {
