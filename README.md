@@ -1,121 +1,241 @@
-# RS-109M AIS Net Locator AIS buoy
+# RS-109M AIS Net Locator Configurator
 
-This repo is contains a [config tool](rs109m.py) and some info about the [RS-109M](https://opcenter.de/pub/Boot/RS_109M_manual.pdf) Net Locator AIS buoy.
+A cross-platform tool for configuring the RS-109M AIS Net Locator buoy — with both a modern **command-line interface (CLI)** and a sleek **PyQt6 graphical interface (GUI)**.
 
-The device is sold by [Socotran](http://web.archive.org/web/20210806132018/https://socotran.com/products/fishing-net-tracker-locator-gps-marine-ais-netsonde-net-sonde-for-boating-rs-109m) and is also available on Ali\*xpress and e\*ay. In the UK, it is also sold by [East Anglian Radio](http://web.archive.org/web/20210806152420/https://www.eastanglianradio.com/rs-109-ais.html).
+This project allows you to easily read and write configuration data to the buoy over serial, replacing the manufacturer’s Windows-only software.
 
-[![buoy complete](bin/images/buoy_800px.jpg)](bin/images/buoy.jpg)
+Absolutely! Here's the updated README section with proper attribution to the original developers and a reference to the upstream project:
 
-Information was gathered by personal observations like photographs of the PCB, and logging of the data stream while configuring.
+## 🙏 Credits & Acknowledgements
 
-## Attention
+This project builds on top of the excellent open-source work by:
 
-It is questionable if this device could be operated as a proper ("valid", "legal") AIS device!
+- [@speters](https://github.com/speters) – **Sönke J. Peters**  
+- [@bjoernrost](https://github.com/bjoernrost) – **Björn Rost**
 
-Take appropriate measures when trying out things (e.g. shield RF, dummy load).
+Their original driver and protocol reverse-engineering can be found here:  
+👉 **[github.com/speters/rs109m](https://github.com/speters/rs109m/tree/main)**
 
-See [FCC statement](http://web.archive.org/web/20210806152632/https://docs.fcc.gov/public/attachments/DA-18-1211A1_Rcd.pdf) concerning the ban of fishing net buoys that use radio frequencies reserved for marine navigation safety.
+We have extended the work by:
 
-## rs109m.py
+- Adding a modern CLI using [Typer](https://typer.tiangolo.com/)
+- Introducing input validation with [Pydantic](https://docs.pydantic.dev/)
+- Building a full-featured GUI with [PyQt6](https://www.riverbankcomputing.com/software/pyqt/)
+- Implementing background device monitoring
+- Packaging with [Poetry](https://python-poetry.org/)
 
-[rs109m.py](rs109m.py) is a configuration tool written in Python 3.
+Big thanks to the original authors for laying the foundation — this project would not exist without their contributions. 💙
 
+---
+
+## ✨ Features
+
+- Fully functional CLI (`rs109m_cli`) with all config fields
+- Sleek GUI (`rs109m_gui`) built with PyQt6
+- Automatic logging to `~/.rs109m/logs/rs109m.log`
+- Validates inputs with [`pydantic`](https://docs.pydantic.dev/)
+- Device connection monitor with auto-read in GUI
+- Supports mock mode for development/testing
+- Supports extended 0xFF config mode
+
+---
+
+## 🚀 Quick Start
+
+### 📦 Installation
+
+1. **Install [Poetry](https://python-poetry.org/docs/#installation):**
+
+```bash
+curl -sSL https://install.python-poetry.org | python3 -
+```
+
+2. **Clone and install dependencies:**
+
+```bash
+git clone https://github.com/your-org/rs109m.git
+cd rs109m
+poetry install
+```
+
+---
+
+## 🧪 Running the Application
+
+Awesome! Here's the updated **CLI section** for your README, now including the `--help` outputs for both `read` and `write` commands to give users a clear idea of what options are available.
+
+---
+
+### 📟 CLI (Command Line)
+
+Run the CLI via Poetry:
+
+```bash
+poetry run rs109m_cli read --device /dev/ttyUSB0 --password 000000
+poetry run rs109m_cli write --device /dev/ttyUSB0 --password 000000 --mmsi 123456789 --name "TestShip" ...
+```
+
+You’ll be prompted for any missing config values.
+
+#### 📖 CLI Help & Options
+
+To explore the available options:
+
+```bash
+poetry run rs109m_cli read --help
+```
 
 ```
-usage: rs109m.py [-h] [-d DEVICE] [-m MMSI] [-n NAME] [-i INTERVAL] [-t TYPE] [-c CALLSIGN] [-v VENDORID] [-u UNITMODEL] [-s SERNUM] [-A REFA] [-B REFB] [-C REFC]
-                 [-D REFD] [-P PASSWORD] [-E] [-W] [-R]
+Usage: rs109m_cli.cmd read [OPTIONS]
 
-RS-109M Net Locator AIS buoy configurator
+Options:
+  --device, -d     TEXT     Serial port (e.g. /dev/ttyUSB0) [required]
+  --password, -P   TEXT     Password (leave blank for default)
+  --mock                    Use the mock device IO instead of a real device
+  --extended, -E            Operate on 0xff size config instead of default 0x40
+  --help                    Show this message and exit.
+```
 
-optional arguments:
-  -h, --help            show this help message and exit
-  -d DEVICE, --device DEVICE
-                        serial port device (e.g. /dev/ttyUSB0)
-  -m MMSI, --mmsi MMSI  MMSI
-  -n NAME, --name NAME  ship name
-  -i INTERVAL, --interval INTERVAL
-                        transmit interval in s [30..600]
-  -t TYPE, --type TYPE  ship type, eg sail=36, pleasure craft=37
-  -c CALLSIGN, --callsign CALLSIGN
-                        call sign
-  -v VENDORID, --vendorid VENDORID
-                        AIS unit vendor id (3 characters)
-  -u UNITMODEL, --unitmodel UNITMODEL
-                        AIS unit vendor model code
-  -s SERNUM, --sernum SERNUM
-                        AIS unit serial num
-  -A REFA, --refa REFA  Reference A (distance AIS to bow (m); Net Locator sends battery voltage instead)
-  -B REFB, --refb REFB  Reference B (distance AIS to stern (m)
-  -C REFC, --refc REFC  Reference C (distance AIS toi port (m)
-  -D REFD, --refd REFD  Reference D (distance AIS to starboard (m)
-  -P PASSWORD, --password PASSWORD
-                        password to access Net Locator
-  -E, --extended        operate on 0xff size config instead of default 0x40
-  -W, --write           write config to Net Locator
-  -R, --noread          do not read from Net Locator
+```bash
+poetry run rs109m_cli write --help
+```
 
 ```
-## Internals
+Usage: rs109m_cli.cmd write [OPTIONS]
 
-Unscrewing the cap gives access to on/off switch (a magnet which acts on a reed relais) and the charging and programming connectors:
+Options:
+  --device, -d       TEXT     Serial port device (e.g. /dev/ttyUSB0) [required]
+  --password, -P     TEXT     Password (leave blank for default)
+  --mmsi, -m         INTEGER  MMSI (leave blank to keep current configuration)
+  --name, -n         TEXT     Ship name (leave blank to keep current configuration)
+  --interval, -i     INTEGER  Transmit interval in seconds [30..600]
+  --type, -t         INTEGER  Ship type (leave blank to keep current configuration)
+  --callsign, -c     TEXT     Call sign (max 6 characters)
+  --refa, -A         INTEGER  Reference A (leave blank to keep current configuration)
+  --refb, -B         INTEGER  Reference B (leave blank to keep current configuration)
+  --refc, -C         INTEGER  Reference C (leave blank to keep current configuration)
+  --refd, -D         INTEGER  Reference D (leave blank to keep current configuration)
+  --vendorid, -v     TEXT     AIS unit vendor id (3 characters)
+  --unitmodel, -u    INTEGER  AIS unit vendor model code
+  --sernum, -s       INTEGER  AIS unit serial num
+  --mock                      Use the mock device IO instead of a real device
+  --extended, -E              Operate on 0xff size config instead of default 0x40
+  --help                      Show this message and exit.
+```
 
-[![buoy connectors](bin/images/buoy_connectors_800px.jpg)](bin/images/buoy_connectors.jpg)
+These CLI tools are ideal for scripting or advanced usage, and they follow the same validation rules and configuration structure as the GUI.
 
-The PCB in all its glory:
+### 🖥️ GUI (Graphical Interface)
 
-[![pcb complete](bin/images/pcb_complete_800px.jpg)](bin/images/pcb_complete.jpg)
+```bash
+poetry run rs109m_gui
+```
 
-[![pcb front side](bin/images/pcb_front_800px.jpg)](bin/images/pcb_front.jpg)
+1. Enter the serial port (e.g. `COM3`, `/dev/ttyUSB0`)
+2. Add password if required (defaults to `000000`)
+3. Enable mock or extended config if needed
+4. Click **Connect** to begin polling the device
+5. If connected, edit fields and click **Write Configuration**
 
-[![pcb back side](bin/images/pcb_back_800px.jpg)](bin/images/pcb_back.jpg)
+⚠️ **You must connect to the device within a few seconds of powering it on.**  
+If a write fails, unplug/replug the device and try again.
 
 
-## Manufacturer's PCSW 1.7 software
+#### 🖼️ Screenshot
 
-The software is available upon request from the dealer.
-It is a Qt application compiled for Windows. I could get it to start with Wine 6.14 on Linux (Linux 5.12.15-arch1-1 x86_64, ArchLinux distribution), but had no chance to get the serial communications running.
+![RS109m GUI Screenshot](bin/screenshots/gui.png)  
+*A sleek PyQt6 interface for reading and writing RS-109M configuration*
 
-![programming software screenshot](bin/images/pcsw17_screenshot_en.png)
+---
 
-Using the software on a Windows VM, I was able to produce some [logs](bin/logs/) to get knowledge of the serial protocol.
+## 🪪 Identifying the COM Port
 
-"Production mode" seems to do nothing more than incrementing MMSI number on subsequent writes.
+On **Windows**, use this command in PowerShell:
 
-## Configuration protocol
+```powershell
+mode
+```
 
-See [logs dir](bin/logs/) for data I obtained while doing tiny configuration changes.
+You’ll see available COM ports (e.g. `COM3`, `COM4`) which correspond to the USB device.
 
-The protocol is via serial 115200,8n1.
+---
 
-Device expects an init sequence with a password. This password is a weak protection, as it defaults to 000000 and is in the range of 0..999999.
-It seems that the password protection can be bypassed by supplying a zero-length password init sequence.
+## 📂 Logs
 
-Initialisation has to take place in the first few seconds after power-up.
+Logs are written to:
 
-After init, you can do 3 things:
- * read config
- * write config
- * set/clear password
+```
+~/.rs109m/logs/rs109m.log
+```
 
-Config is done as a whole block of data with some values weirdly stuffed together to save some space.
+You’ll see details of each read/write attempt, connection status, and validation feedback — useful for debugging and support.
 
-Original software always reads/writes 0x40 bytes, but there is possibility to access 0xff bytes.
+---
 
-When supplying an "update" command without actually delivering any data, there seems to be a glitch leading to contents from an unknown memory region being stored in config space.
-This can be restored by simply copying default memory contents (0xff length) again.
+## 🧪 Running Tests
 
-It looks like the battery voltage is sent as 1/10V in place of the Reference A value.
-Battery voltage is measured via a voltage divider (43k/56k or 47k/56k - can not measure exactly due to small part size) on PB1 (pin 19) of the STM32F103.
+This project uses `pytest` with optional dotenv support.
 
-## Hardware
+```bash
+poetry run pytest
+```
 
-Buoy is built around Si4463 radio.
+You can include `.env.test` to inject test-specific variables if needed.
 
-Microprocessor matches the layout of ubiquitous STM32F103C8, but as it has no markings, it could as well be a clone or different STM32 ARM µC.
-A SWDIO debug port is available on the PCB (marked G=ground, C=clock, D=swdio, V=VCC), but did not check.
+---
 
-GPS module is ATGM332D with GPS and BDS/BeiDou support, but no GLONASS. It seems to be tied only with its TX pin to an RX pin of the µC.
+## 📦 Download Pre-built Executables
 
-[Adrain Studer did also some investigations](https://mobile.twitter.com/AdiStuder/status/1380290819056304130) and posted a [pcb photo](http://web.archive.org/web/20210809180746/https://pbs.twimg.com/media/Ex3FZafUcAIMJLL?format=jpg&name=4096x4096).
+You can download pre-built standalone binaries (for Windows/macOS/Linux) from the [latest release page](https://github.com/your-org/rs109m/releases/latest).
 
-See [MAIANA AIS project](https://github.com/peterantypas/maiana) for a far more capable Open Source board.
+No Python installation required — just unzip and run!
+
+---
+
+## 📜 Notes on Legality
+
+> ⚠️ **Important:** It is questionable whether this device is legal for AIS use in all jurisdictions.
+
+Please consult with your local maritime authority before operating the RS-109M Net Locator.  
+See this [FCC statement](http://web.archive.org/web/20210806152632/https://docs.fcc.gov/public/attachments/DA-18-1211A1_Rcd.pdf) on the ban of AIS fishing net buoys.
+
+---
+
+## 👨‍🔬 Internals
+
+- Communicates via **115200 baud, 8N1 serial**
+- Config must be read/written **within the first few seconds after power-up**
+- Supports 0x40 and 0xFF config blocks
+- Uses a simple init+password handshake protocol
+- Reference A is often used for **battery voltage reporting**
+
+Full protocol logs can be found in `bin/logs/` (if present).  
+See `rs109m/driver_service/` for details on how messages are encoded and parsed.
+
+---
+
+## 🧠 Contributing
+
+Pull requests are welcome!
+
+- Fork this repo and create a feature branch
+- Install with `poetry install`
+- Run and test changes via `poetry run rs109m_cli` or `poetry run rs109m_gui`
+- Log output is always available in `~/.rs109m/logs/`
+
+---
+
+## 🧾 License
+
+This tool is licensed under the **MIT License**.  
+Originally developed by [Sönke J. Peters](https://github.com/speters)  
+Modernised, expanded and maintained by [Matthew Coulter](mailto:mattcoul7@gmail.com)
+
+---
+
+Enjoy hacking the RS-109M! 🔧📡  
+If you find this useful, give the project a ⭐️ and share your findings.
+
+---
+
+Let me know if you'd like this turned into a downloadable `README.md` file or pre-filled with your GitHub repo URL.
