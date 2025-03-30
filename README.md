@@ -4,28 +4,6 @@ A cross-platform tool for configuring the RS-109M AIS Net Locator buoy — with 
 
 This project allows you to easily read and write configuration data to the buoy over serial, replacing the manufacturer’s Windows-only software.
 
-Absolutely! Here's the updated README section with proper attribution to the original developers and a reference to the upstream project:
-
-## 🙏 Credits & Acknowledgements
-
-This project builds on top of the excellent open-source work by:
-
-- [@speters](https://github.com/speters) – **Sönke J. Peters**  
-- [@bjoernrost](https://github.com/bjoernrost) – **Björn Rost**
-
-Their original driver and protocol reverse-engineering can be found here:  
-👉 **[github.com/speters/rs109m](https://github.com/speters/rs109m/tree/main)**
-
-We have extended the work by:
-
-- Adding a modern CLI using [Typer](https://typer.tiangolo.com/)
-- Introducing input validation with [Pydantic](https://docs.pydantic.dev/)
-- Building a full-featured GUI with [PyQt6](https://www.riverbankcomputing.com/software/pyqt/)
-- Implementing background device monitoring
-- Packaging with [Poetry](https://python-poetry.org/)
-
-Big thanks to the original authors for laying the foundation — this project would not exist without their contributions. 💙
-
 ---
 
 ## ✨ Features
@@ -250,9 +228,27 @@ Modernised, expanded and maintained by [Matthew Coulter](mailto:mattcoul7@gmail.
 
 ---
 
-Enjoy hacking the RS-109M! 🔧📡  
-If you find this useful, give the project a ⭐️ and share your findings.
+## 🙏 Credits & Acknowledgements
+
+This project builds on top of the excellent open-source work by:
+
+- [@speters](https://github.com/speters) – **Sönke J. Peters**  
+- [@bjoernrost](https://github.com/bjoernrost) – **Björn Rost**
+
+Their original driver and protocol reverse-engineering can be found here:  
+👉 **[github.com/speters/rs109m](https://github.com/speters/rs109m/tree/main)**
+
+We have extended the work by:
+
+- Adding a modern CLI using [Typer](https://typer.tiangolo.com/)
+- Introducing input validation with [Pydantic](https://docs.pydantic.dev/)
+- Building a full-featured GUI with [PyQt6](https://www.riverbankcomputing.com/software/pyqt/)
+- Implementing background device monitoring
+- Packaging with [Poetry](https://python-poetry.org/)
+
+Big thanks to the original authors for laying the foundation — this project would not exist without their contributions. 💙
 
 ---
 
-Let me know if you'd like this turned into a downloadable `README.md` file or pre-filled with your GitHub repo URL.
+Enjoy hacking the RS-109M! 🔧📡  
+If you find this useful, give the project a ⭐️ and share your findings.
