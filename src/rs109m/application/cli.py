@@ -4,6 +4,7 @@ import re
 import logging
 
 from rs109m.config import RS109mConfig
+from rs109m.constants import DEFAULT_PASSWORD, BAUDRATE, PASSWORD_MAXLEN
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +25,7 @@ def main():
     parser.add_argument("-B", "--refb", help="Reference B (distance AIS to stern (m)")
     parser.add_argument("-C", "--refc", help="Reference C (distance AIS to port (m)")
     parser.add_argument("-D", "--refd", help="Reference D (distance AIS to starboard (m)")
-    password_default = '000000'
+    default_password = DEFAULT_PASSWORD
     parser.add_argument("-P", "--password", help="password to access Net Locator")
     parser.add_argument("-E", "--extended", help="operate on 0xff size config instead of default 0x40", action='store_true')
     # parser.add_argument("-P", "--newpass", help="set new password to access Net Locator")
@@ -43,7 +44,7 @@ def main():
         ser = serial.Serial()
         ser.port = args.device
 
-        ser.baudrate = 115200
+        ser.baudrate = BAUDRATE
         ser.bytesize = serial.EIGHTBITS
         ser.parity = serial.PARITY_NONE
         ser.stopbits = serial.STOPBITS_ONE
@@ -60,13 +61,13 @@ def main():
         if args.password != None:
             password = args.password
 
-            password_maxlen = 6
+            password_maxlen = PASSWORD_MAXLEN
 
             if not re.match("^[0-9]{0,"+str(password_maxlen)+"}$", password):
                 logger.error("Password: incorrect format, should match [0-9]{0,"+str(password_maxlen)+"}")
                 exit(1)
 
-            password_prepared = (password.encode() + password_default.encode())[:password_maxlen]
+            password_prepared = (password.encode() + default_password.encode())[:password_maxlen]
             ser.write([0x59, 0x01, 0x42, password_maxlen])
             ser.write(password_prepared)
         else:
