@@ -207,3 +207,32 @@ class RS109mConfig:
             (1 << 6) - 1)) | (int(d) & ((1 << 6) - 1))
 
     refd = property(get_refd, set_refd)
+
+    def get_config_str(
+        self,
+        extended: bool,
+    ) -> str:
+        """
+        Returns a string representation of the configuration.
+        """
+        num_bytes = self.default_len
+        if extended:
+            num_bytes = 0xff
+
+        out = []
+        out.append(f"  MMSI: {self.mmsi}")
+        out.append(f"  Name: {self.name}")
+        out.append(f"  TX interval (s): {self.interval}")
+        out.append(f"  Ship type: {self.shipncargo}")
+        out.append(f"  Callsign: {self.callsign}")
+        out.append(f"  VendorID: {self.vendorid}")
+        out.append(f"  UnitModel: {self.unitmodel}")
+        out.append(f"  UnitSerial: {self.sernum}")
+        out.append(f"  Reference point A (m): {self.refa} (read-only battery voltage {self.refa/10.0:.1f}V)")
+        out.append(f"  Reference point B (m): {self.refb}")
+        out.append(f"  Reference point C (m): {self.refc}")
+        out.append(f"  Reference point D (m): {self.refd}")
+        out.append("")
+        out.append("[ 0x" + self.config[:num_bytes].hex('#').replace('#', ', 0x') + " ]")
+
+        return "\n".join(out)
