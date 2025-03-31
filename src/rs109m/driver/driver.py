@@ -20,12 +20,17 @@ class RS109mDriver:
                    Can be None if no device is supplied.
         """
         self.device_io = device_io
+        self.handshook = False
 
     @contextmanager
     def handshake(
         self,
         password: str,
     ):
+        if self.handshook:
+            yield
+            return
+
         """
         Context manager to perform and validate handshake.
         After exiting, it calls device_io.reset().
@@ -44,6 +49,7 @@ class RS109mDriver:
             raise Exception("Could not initialize with password.")
 
         try:
+            self.handshook = True
             yield
         finally:
             self.device_io.reset()

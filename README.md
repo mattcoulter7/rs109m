@@ -24,7 +24,7 @@ This project allows you to easily read and write configuration data to the buoy 
 
 You can download a pre-built version of the GUI application (Windows only) here:
 
-👉 **[Download rs109m.zip](https://github.com/mattcoulter7/rs109m/releases/download/1.0.2/rs109m.zip)**
+👉 **[Download rs109m.zip](https://github.com/mattcoulter7/rs109m/releases/download/1.0.3/rs109m.zip)**
 
 1. Unzip the file.
 2. Run `rs109m_gui.exe` inside the extracted folder.

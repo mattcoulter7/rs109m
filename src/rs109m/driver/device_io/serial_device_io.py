@@ -9,20 +9,19 @@ from .base import DeviceIO
 class SerialDeviceIO(DeviceIO):
     def __init__(self, port: str):
         # Set up the serial device with the desired configuration
-        self.ser = serial.Serial(
-            port=port,
-            baudrate=BAUDRATE,
-            bytesize=serial.EIGHTBITS,
-            parity=serial.PARITY_NONE,
-            stopbits=serial.STOPBITS_ONE,
-            timeout=SERIAL_TIMEOUT,
-            write_timeout=SERIAL_WRITE_TIMEOUT,
-        )
+        self.ser = serial.Serial()
+        self.ser.port = port
+        self.ser.baudrate = BAUDRATE
+        self.ser.bytesize = serial.EIGHTBITS
+        self.ser.parity = serial.PARITY_NONE
+        self.ser.stopbits = serial.STOPBITS_ONE
+        self.ser.timeout = SERIAL_TIMEOUT
+        self.ser.write_timeout = SERIAL_WRITE_TIMEOUT
+
         self.ser.open()
 
         # Flush any leftover data to stabilize the connection
         self.ser.read(0xffff)
-        self.ser.timeout = SERIAL_WRITE_TIMEOUT
 
     @override
     def write(self, data) -> None:

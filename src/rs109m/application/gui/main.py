@@ -64,7 +64,7 @@ class DeviceMonitor(QThread):
         If it succeeds and we weren't connected before, emit device_connected.
         If it fails and we were connected before, emit device_disconnected.
         """
-        while self.running:
+        while not self._was_connected:
             try:
                 req = RS109mReadConfigRequest(
                     device=self.device,

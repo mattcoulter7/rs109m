@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "rs109m"
 description = "RS-109M AIS net locator buoy configurator | for Allan Coulter"
-version = "1.0.2"
+version = "1.0.3"
 authors = ["Matthew Coulter <mattcoul7@gmail.com>", "Sönke J. Peters <github.com/speters>", "Björn Rost <github.com/bjoernrost>"]
 readme = "README.md"
 packages = [{ include = "rs109m", from = "src" }]
